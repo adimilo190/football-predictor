@@ -47,3 +47,4 @@
 - Włączono `git config --global credential.helper store` — token zapisany w `~/.git-credentials` (poza folderem projektu), kolejne pushe automatyczne.
 - Utwardzono `.gitignore` o typowe nazwy plików z sekretami (commit `df2f929`).
 - **Zweryfikowano:** klucz API-Football NIGDY nie trafił do historii gita (0 wystąpień) — nie ma wycieku, klucza NIE trzeba wymieniać. Pozostaje w użyciu.
+- **Przetestowano dostęp API-Football (wyprzedzająco, normalnie w Sesji 3):** plan Free, 100 zapytań/dobę, dostęp do sezonów **tylko 2022/23–2024/25** (brak 2025/26 i 2026/27). Wniosek: Fazy 1/3/4 budujemy na sezonie 2024/25; Faza 2 (żywe dane) — decyzja o źródle przy jej starcie. Szczegóły w ROADMAP → sekcja "Ryzyka" pkt 1.

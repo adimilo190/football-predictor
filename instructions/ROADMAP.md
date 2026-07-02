@@ -213,8 +213,11 @@
 
 ## Ryzyka i plany awaryjne
 
-1. **Limity API-Football (darmowy plan: 100 zapytań/dzień, możliwy brak bieżącego sezonu).**
-   Weryfikujemy w Sesji 3 zanim zbudujemy cokolwiek więcej. Plan B: [football-data.org](https://www.football-data.org) — darmowo pokrywa dokładnie nasze 6 lig + Ligę Mistrzów w bieżącym sezonie (minus: brak pucharów krajowych → puchary wtedy tylko LM albo mix dwóch API). Dane treningowe ML i tak bierzemy z CSV (football-data.co.uk), więc Faza 5 jest bezpieczna niezależnie od decyzji.
+1. **Limity API-Football — ZWERYFIKOWANE 2026-07-02 (test na naszym kluczu).**
+   - Plan: **Free**, aktywny do 2027-03, **100 zapytań/dobę**.
+   - **Dostęp do sezonów: TYLKO 2022/23, 2023/24, 2024/25.** Brak dostępu do 2025/26 (zakończony) i 2026/27 (nadchodzący). Najnowszy dostępny = **2024/25**.
+   - **Decyzja:** Fazy 1, 3, 4 budujemy na sezonie **2024/25** (kompletne, realne dane — w zupełności OK dla portfolio). Faza 5 (ML) niezależna — dane z CSV football-data.co.uk.
+   - **Faza 2 (ulubione: nadchodzące mecze)** to jedyna faza wymagająca żywych danych. Decyzję o źródle podejmujemy przy jej starcie (~24 sie, gdy ruszy sezon 2026/27): plan B = [football-data.org](https://www.football-data.org) (darmowo: nasze 6 lig + Liga Mistrzów, bieżący sezon; brak pucharów krajowych) LUB płatny plan API-Football (~19 €/mies.) LUB demo na danych 2024/25.
 2. **Kalendarz piłkarski:** lipiec to przerwa między sezonami — budujemy na zakończonym sezonie 2025/26, a żywe dane wskoczą naturalnie w sierpniu (start 2026/27) — akurat na Fazę 2.
 3. **Wakacje/mniej czasu:** bufor w tygodniu 8 i na końcu; w razie poślizgu tniemy: symulację pucharów (S20), część szlifów UI — nigdy nie tniemy testów i README.
 4. **Spuchnięte sesje:** jeśli sesja się nie mieści w 2–4h, przenosimy resztki do następnej i aktualizujemy ROADMAP — plan służy nam, nie odwrotnie.
