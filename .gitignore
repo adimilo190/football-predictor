@@ -1,0 +1,23 @@
+# === Python ===
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# === Sekrety - NIGDY nie commitujemy! ===
+# Plik .env zawiera hasła i klucze API. Na GitHubie ląduje tylko .env.example (wzór bez sekretów).
+.env
+
+# === IDE / system ===
+.vscode/
+.idea/
+.DS_Store
+
+# === Claude Code - lokalne ustawienia uprawnień ===
+.claude/settings.local.json
+
+# === Frontend (przyda się od Bloku 2) ===
+node_modules/
+dist/
+.eslintcache
