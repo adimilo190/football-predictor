@@ -217,7 +217,11 @@
    - Plan: **Free**, aktywny do 2027-03, **100 zapytań/dobę**.
    - **Dostęp do sezonów: TYLKO 2022/23, 2023/24, 2024/25.** Brak dostępu do 2025/26 (zakończony) i 2026/27 (nadchodzący). Najnowszy dostępny = **2024/25**.
    - **Decyzja:** Fazy 1, 3, 4 budujemy na sezonie **2024/25** (kompletne, realne dane — w zupełności OK dla portfolio). Faza 5 (ML) niezależna — dane z CSV football-data.co.uk.
-   - **Faza 2 (ulubione: nadchodzące mecze)** to jedyna faza wymagająca żywych danych. Decyzję o źródle podejmujemy przy jej starcie (~24 sie, gdy ruszy sezon 2026/27): plan B = [football-data.org](https://www.football-data.org) (darmowo: nasze 6 lig + Liga Mistrzów, bieżący sezon; brak pucharów krajowych) LUB płatny plan API-Football (~19 €/mies.) LUB demo na danych 2024/25.
+   - **Faza 2 (ulubione: nadchodzące mecze)** to jedyna faza wymagająca żywych danych. Decyzję o źródle podejmujemy przy jej starcie (~24 sie, gdy ruszy sezon 2026/27).
+   - **Preferencja właściciela (ustalona 2026-07-02):** chce mieć **bieżący sezon ORAZ historię z kilku poprzednich**. Opcja "demo tylko na 2024/25" ODPADA. Do wyboru dwie pełne drogi:
+     - **A) Darmowa hybryda:** [football-data.co.uk](https://www.football-data.co.uk) (CSV: 20+ sezonów historii + bieżący sezon, wyniki → tabele liczymy sami) + [football-data.org](https://www.football-data.org) (darmowe API: terminarz + tabele live dla 6 lig + LM). 0 zł, więcej pracy, brak pucharów krajowych. **← rekomendacja dla CV.**
+     - **B) API-Football premium:** jedno źródło, wszystko (bieżący + historia + puchary + logo), ~19 €/mies.
+     - Wybór: **odłożony na decyzję właściciela** (Sesja 3 / start Fazy 2).
 2. **Kalendarz piłkarski:** lipiec to przerwa między sezonami — budujemy na zakończonym sezonie 2025/26, a żywe dane wskoczą naturalnie w sierpniu (start 2026/27) — akurat na Fazę 2.
 3. **Wakacje/mniej czasu:** bufor w tygodniu 8 i na końcu; w razie poślizgu tniemy: symulację pucharów (S20), część szlifów UI — nigdy nie tniemy testów i README.
 4. **Spuchnięte sesje:** jeśli sesja się nie mieści w 2–4h, przenosimy resztki do następnej i aktualizujemy ROADMAP — plan służy nam, nie odwrotnie.
