@@ -40,4 +40,10 @@
 2. **[SESJA 2]** Restrukturyzacja backendu do pakietu `app/` + pydantic-settings + schematy Pydantic + Ruff (szczegóły w ROADMAP).
 
 ## Stan repo po sesji
-- Gałąź `main`, 1 commit, remote jeszcze nie ustawiony (czeka na założenie repo — punkt 1 powyżej).
+- Gałąź `main`, 2 commity, **wypchnięte na GitHub** (`origin` = github.com/adimilo190/football-predictor). ✅
+
+## Dopisek (po zakończeniu sesji)
+- **Zadanie domowe zrobione:** repo istniało już z wcześniejszej próby; wygenerowano nowy token GitHuba (stary wygasł — tokeny GitHuba mają datę ważności z założenia) i wykonano push.
+- Włączono `git config --global credential.helper store` — token zapisany w `~/.git-credentials` (poza folderem projektu), kolejne pushe automatyczne.
+- Utwardzono `.gitignore` o typowe nazwy plików z sekretami (commit `df2f929`).
+- **Zweryfikowano:** klucz API-Football NIGDY nie trafił do historii gita (0 wystąpień) — nie ma wycieku, klucza NIE trzeba wymieniać. Pozostaje w użyciu.
