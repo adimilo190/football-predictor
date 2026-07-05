@@ -1,15 +1,10 @@
-import os
-
 from fastapi import FastAPI, Depends
 import httpx
-from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 
-import models
-from database import engine, SessionLocal
-
-# Wczytujemy sekrety z pliku .env (bezpieczne - .env nie trafia do gita)
-load_dotenv()
+from app.config import settings
+from app import models
+from app.database import engine, SessionLocal
 
 # Tworzymy tabele (jeśli jeszcze ich nie ma)
 models.Base.metadata.create_all(bind=engine)
@@ -17,7 +12,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 # --- KONFIGURACJA API ---
-API_KEY = os.getenv("API_FOOTBALL_KEY")
+API_KEY = settings.API_FOOTBALL_KEY
 HEADERS = {"x-apisports-key": API_KEY}
 
 # --- FUNKCJA POMOCNICZA BAZY DANYCH ---
@@ -39,7 +34,7 @@ async def import_leagues(db: Session = Depends(get_db)):
     async with httpx.AsyncClient() as client:
         # Pukamy do kelnera z API-Football
         response = await client.get(
-            "https://v3.football.api-sports.io/leagues",
+            f"{settings.API_FOOTBALL_BASE_URL}/leagues",
             headers=HEADERS,
             params={"country": "England"} # Zostajemy przy Anglii dla testu
         )

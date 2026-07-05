@@ -24,6 +24,7 @@
 * **Testowanie API:** Postman[cite: 1].
 * **Środowisko Python:** Virtualenv (venv) do izolacji paczek[cite: 1].
 * **Edytor kodu:** VS Code (wyposażony w rozszerzenie SQLTools do podglądu bazy danych)[cite: 1].
+* **Powłoka / terminal:** **Bash w WSL** (Ubuntu). Uwaga: gdy w terminalu wpisujesz komendę `bash`/linuksową, wykonuje się ona w **maszynie wirtualnej Linuksa (WSL)**, a nie w Windowsie. Cały kod, git, Python i PostgreSQL żyją po stronie WSL (`/home/micmilo190/football-predictor`). Dlatego git i Pythona uruchamiamy w środku WSL — git z Windowsa na ścieżce UNC rzuca błąd „dubious ownership" i działa wolno (szczegóły w `CLAUDE.md`).
 
 ---
 
