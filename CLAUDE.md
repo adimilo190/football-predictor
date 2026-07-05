@@ -7,9 +7,9 @@ Deadline: koniec września 2026.
 
 ## TRYB NAUKI (najważniejsza zasada)
 Właściciel projektu dopiero uczy się używanych narzędzi (FastAPI, React, TS, SQL, git, ML...).
-- Odpowiadaj **po polsku**.
+- Odpowiadaj **po polsku** (rozmowy na czacie i tłumaczenia konceptów zawsze po polsku).
 - Przy każdym nowym narzędziu/koncepcie: krótko wytłumacz **co to jest, po co i jak działa** — zanim go użyjesz.
-- Kod pisz z pomocnymi komentarzami po polsku (jak w istniejących plikach).
+- **Kod pisz po angielsku**: komentarze, docstringi oraz nazwy zmiennych i funkcji — wszystko po angielsku (profesjonalny standard, repo idzie do CV). Komentarze mają być pomocne i tłumaczące „dlaczego".
 - Nie rób wszystkiego za użytkownika hurtem — pracuj etapami, tłumacząc decyzje. Preferuj małe kroki, które da się zrozumieć.
 
 ## Rytuał końca sesji (OBOWIĄZKOWY)
@@ -29,6 +29,7 @@ Właściciel projektu dopiero uczy się używanych narzędzi (FastAPI, React, TS
 
 ## Konwencje
 - Backend: FastAPI + SQLAlchemy + PostgreSQL; frontend (od Bloku 2): React + TypeScript + Vite + Tailwind w folderze `frontend/`.
-- Commity po angielsku, kod i komentarze mogą być po polsku.
+- **Język w kodzie: angielski** — commity, komentarze, docstringi oraz nazwy zmiennych i funkcji po angielsku. Rozmowy na czacie (tryb nauki) pozostają po polsku.
+- Formatowanie i lint: **Ruff** (`venv/bin/ruff format app/` + `venv/bin/ruff check app/`) — kod ma przechodzić bez uwag.
 - Testy: pytest w `tests/` (od Sesji 5).
 - Zmiany schematu bazy: przez migracje Alembic (od Sesji 3), nie przez ręczne DROP/CREATE.

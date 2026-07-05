@@ -10,7 +10,7 @@
 
 | Termin  | Kamień milowy                                              | Status |
 |---------|------------------------------------------------------------|--------|
-| 6 lip   | Repo na GitHubie, sekrety w `.env`, backend uporządkowany  | [~]    |
+| 6 lip   | Repo na GitHubie, sekrety w `.env`, backend uporządkowany  | [x]    |
 | 20 lip  | **Faza 1 backend**: tabele lig + puchary w bazie i API     | [ ]    |
 | 10 sie  | **Faza 1 komplet**: UI tabel i drabinek działa             | [ ]    |
 | 24 sie  | **Faza 2 komplet**: ulubione drużyny + dashboard           | [ ]    |
@@ -30,16 +30,16 @@
 - [x] `requirements.txt` (zamrożenie wersji paczek)
 - [x] ROADMAP + system logów sesji + `CLAUDE.md`
 - [x] Pierwszy commit na gałęzi `main`
-- [ ] **Zadanie domowe:** założyć repo `football-predictor` na GitHubie i wykonać push (komendy w `sessions/session-01.md`)
+- [x] **Zadanie domowe:** założyć repo `football-predictor` na GitHubie i wykonać push (komendy w `sessions/session-01.md`)
 
 **Czego się uczysz:** git (staging, commit, branch, remote, push), po co jest `.env` i `.gitignore`, czym jest `requirements.txt`.
 
-### Sesja 2 — do 6 lip [ ] Struktura backendu jak w prawdziwym projekcie
-- [ ] Restrukturyzacja: pojedynczy `main.py` → pakiet `app/` (`app/main.py`, `app/database.py`, `app/models.py`, `app/routers/`, `app/schemas.py`, `app/config.py`)
-- [ ] `pydantic-settings` — konfiguracja z `.env` w jednym miejscu (klasa `Settings`)
-- [ ] Schematy Pydantic (`response_model`) — kontrola tego, co API zwraca
-- [ ] Tour po Swagger UI (`/docs`) — dlaczego FastAPI generuje dokumentację za darmo
-- [ ] Ruff — linter/formatter Pythona + pierwsze uruchomienie
+### Sesja 2 — 5 lip [x] Struktura backendu jak w prawdziwym projekcie
+- [x] Restrukturyzacja: pojedynczy `main.py` → pakiet `app/` (`app/main.py`, `app/database.py`, `app/models.py`, `app/schemas.py`, `app/config.py`) — `app/routers/` odłożone, aż endpointów przybędzie
+- [x] `pydantic-settings` — konfiguracja z `.env` w jednym miejscu (klasa `Settings`)
+- [x] Schematy Pydantic (`response_model`) — kontrola tego, co API zwraca (`LeagueResponse` na `/my-leagues`)
+- [x] Tour po Swagger UI (`/docs`) — dlaczego FastAPI generuje dokumentację za darmo
+- [x] Ruff — linter/formatter Pythona + pierwsze uruchomienie (kod czysty; komentarze przełączone na angielski)
 
 **Czego się uczysz:** jak organizuje się produkcyjny projekt FastAPI, czym jest Pydantic i walidacja danych, czym jest REST, lintowanie kodu.
 

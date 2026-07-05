@@ -1,16 +1,17 @@
 from sqlalchemy import Column, Integer, String
 from app.database import Base
 
-# Tworzymy klasę League, która dziedziczy po Base z naszego pliku database.py
+
+# The League class inherits from Base (defined in database.py).
 class League(Base):
-    # Tak będzie się nazywać fizyczna tabela w bazie PostgreSQL
+    # Name of the physical table in PostgreSQL.
     __tablename__ = "leagues"
 
-    # Definiujemy kolumny tabeli
-    # primary_key=True oznacza, że to unikalny identyfikator (nie mogą być dwie ligi z tym samym ID)
+    # Table columns.
+    # primary_key=True marks the unique identifier (no two leagues share an ID).
     id = Column(Integer, primary_key=True, index=True)
-    
-    # Zwykłe kolumny tekstowe na nazwę ligi, kraj i ewentualnie link do logo
+
+    # Plain text columns for the league name, country and optional logo link.
     name = Column(String, index=True)
     country = Column(String)
     logo_url = Column(String)

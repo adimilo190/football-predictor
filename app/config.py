@@ -1,40 +1,40 @@
 # app/config.py
-# JEDNO miejsce na całą konfigurację aplikacji.
-# Zamiast wołać os.getenv(...) w wielu plikach, opisujemy wszystkie ustawienia
-# jako klasę Settings. Biblioteka pydantic-settings sama wczyta wartości z pliku
-# .env, sprawdzi ich typy i od razu przy starcie krzyknie, jeśli czegoś brakuje.
+# A SINGLE place for the whole application configuration.
+# Instead of calling os.getenv(...) across many files, we describe all settings
+# as a Settings class. The pydantic-settings library loads values from the .env
+# file, validates their types, and fails loudly at startup if something is missing.
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Wszystkie ustawienia aplikacji w jednym obiekcie.
+    """All application settings in a single object.
 
-    Każde pole poniżej odpowiada zmiennej o tej samej nazwie w pliku .env.
+    Each field below maps to an env variable of the same name in the .env file.
     """
 
-    # --- Baza danych ---
-    # ": str" to adnotacja typu — mówi: "ta wartość ma być tekstem".
-    # Brak wartości domyślnej = pole WYMAGANE. Jeśli nie ma go w .env,
-    # aplikacja nie wystartuje (i dobrze — od razu wiemy, co poprawić).
+    # --- Database ---
+    # ": str" is a type annotation - it says "this value must be text".
+    # No default value = REQUIRED field. If it is missing from .env,
+    # the app won't start (which is good - we learn immediately what to fix).
     DATABASE_URL: str
 
     # --- API-Football ---
     API_FOOTBALL_KEY: str
 
-    # To pole MA wartość domyślną (po "="), więc jest opcjonalne w .env.
-    # Jak ktoś nie poda własnego adresu, użyjemy tego.
+    # This field HAS a default value (after "="), so it is optional in .env.
+    # If nobody provides their own address, we use this one.
     API_FOOTBALL_BASE_URL: str = "https://v3.football.api-sports.io"
 
-    # model_config to instrukcja DLA pydantic-settings, skąd i jak czytać ustawienia.
+    # model_config tells pydantic-settings where and how to read the settings.
     model_config = SettingsConfigDict(
-        env_file=".env",            # z tego pliku wczytujemy zmienne
-        env_file_encoding="utf-8",  # kodowanie pliku (polskie znaki itp.)
-        extra="ignore",             # dodatkowe zmienne w .env nie wywołają błędu
+        env_file=".env",  # read variables from this file
+        env_file_encoding="utf-8",  # file encoding (accents, etc.)
+        extra="ignore",  # extra variables in .env won't raise an error
     )
 
 
-# Tworzymy JEDEN wspólny obiekt ustawień. W innych plikach piszemy po prostu:
+# We create ONE shared settings object. In other files we simply write:
 #   from app.config import settings
-# i sięgamy po settings.DATABASE_URL, settings.API_FOOTBALL_KEY itd.
+# and access settings.DATABASE_URL, settings.API_FOOTBALL_KEY, etc.
 settings = Settings()
