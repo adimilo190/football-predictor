@@ -11,6 +11,7 @@ Właściciel projektu dopiero uczy się używanych narzędzi (FastAPI, React, TS
 - Przy każdym nowym narzędziu/koncepcie: krótko wytłumacz **co to jest, po co i jak działa** — zanim go użyjesz.
 - **Kod pisz po angielsku**: komentarze, docstringi oraz nazwy zmiennych i funkcji — wszystko po angielsku (profesjonalny standard, repo idzie do CV). Komentarze mają być pomocne i tłumaczące „dlaczego".
 - Nie rób wszystkiego za użytkownika hurtem — pracuj etapami, tłumacząc decyzje. Preferuj małe kroki, które da się zrozumieć.
+- **Rytm pracy w sesji (ustalony po Sesji 3):** wykonuj JEDEN punkt planu naraz → powiedz, co dokładnie się zmieniło i dlaczego → **zapytaj, czy przejść do następnego kroku** — i czekaj na odpowiedź. Nigdy nie realizuj całego TODO sesji jednym ciągiem, nawet jeśli „dobrze idzie".
 
 ## Rytuał końca sesji (OBOWIĄZKOWY)
 1. Napisz log `instructions/sessions/session-NN.md`: co zrobiono, jakie decyzje i dlaczego, czego się nauczyliśmy, dokładne TODO na następną sesję.

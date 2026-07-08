@@ -4,12 +4,12 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app import models, schemas
-from app.database import engine, SessionLocal
+from app.constants import TARGET_LEAGUE_IDS
+from app.database import SessionLocal
 
-# Create the tables (if they do not exist yet).
-models.Base.metadata.create_all(bind=engine)
-
-app = FastAPI()
+# NOTE: tables are no longer created here. The database schema is managed
+# exclusively by Alembic migrations — run: alembic upgrade head
+app = FastAPI(title="Football Predictor API")
 
 # --- API CONFIGURATION ---
 API_KEY = settings.API_FOOTBALL_KEY
@@ -32,48 +32,56 @@ def read_root():
 
 
 # --- 1. ENDPOINT: FETCH FROM THE API AND SAVE TO THE DATABASE ---
-@app.get("/import-leagues")
+# POST, not GET: this endpoint changes the database, and GET requests
+# are expected to be "safe" (read-only) by REST conventions.
+@app.post("/import-leagues")
 async def import_leagues(db: Session = Depends(get_db)):
     async with httpx.AsyncClient() as client:
-        # Call API-Football.
+        # One request for the full league list (~1200 items), filtered locally.
+        # Cheaper than 13 per-id requests on the free plan (100 requests/day).
         response = await client.get(
             f"{settings.API_FOOTBALL_BASE_URL}/leagues",
             headers=HEADERS,
-            params={"country": "England"},  # England only, for testing
         )
         data = response.json()
 
-        # API-Football keeps the actual data under the "response" key.
-        leagues_data = data.get("response", [])
+    # API-Football keeps the actual data under the "response" key.
+    leagues_data = data.get("response", [])
 
-        added_count = 0
+    added = []
 
-        # Loop over every league returned by the API.
-        for item in leagues_data:
-            league_info = item["league"]
-            country_info = item["country"]
+    for item in leagues_data:
+        league_info = item["league"]
+        country_info = item["country"]
 
-            # Skip leagues we already have (avoid duplicates) by checking the ID.
-            existing_league = (
-                db.query(models.League)
-                .filter(models.League.id == league_info["id"])
-                .first()
+        # Keep only the competitions this project tracks.
+        if league_info["id"] not in TARGET_LEAGUE_IDS:
+            continue
+
+        # Skip leagues we already have (avoid duplicates) by checking the ID.
+        existing_league = (
+            db.query(models.League)
+            .filter(models.League.id == league_info["id"])
+            .first()
+        )
+
+        if not existing_league:
+            # If it does not exist yet, build a new object from our model.
+            new_league = models.League(
+                id=league_info["id"],
+                name=league_info["name"],
+                country=country_info["name"],
+                logo_url=league_info["logo"],
             )
+            db.add(new_league)  # Stage it for saving.
+            added.append(f"{league_info['name']} ({country_info['name']})")
 
-            if not existing_league:
-                # If it does not exist yet, build a new object from our model.
-                new_league = models.League(
-                    id=league_info["id"],
-                    name=league_info["name"],
-                    country=country_info["name"],
-                    logo_url=league_info["logo"],
-                )
-                db.add(new_league)  # Stage it for saving.
-                added_count += 1
+    db.commit()  # Persist all staged changes to the database.
 
-        db.commit()  # Persist all staged changes to the database.
-
-        return {"message": f"Sukces! Zapisano {added_count} nowych lig do Twojej bazy."}
+    return {
+        "message": f"Sukces! Zapisano {len(added)} nowych rozgrywek.",
+        "imported": added,
+    }
 
 
 # --- 2. ENDPOINT: SHOW YOUR OWN DATABASE ---

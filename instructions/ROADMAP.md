@@ -47,12 +47,12 @@
 
 ## BLOK 1 — Faza 1 backend: dane lig i pucharów (tygodnie 2–3: 7–20 lip)
 
-### Sesja 3 — [ ] Weryfikacja API + modele danych + migracje
-- [ ] **KLUCZOWE:** test darmowego planu API-Football — czy zwraca `standings` dla sezonu 2025/26 i 2026/27? (darmowy plan bywa ograniczony do starszych sezonów!)
-- [ ] Decyzja: zostajemy przy API-Football czy przechodzimy na football-data.org (plan B opisany w "Ryzykach")
-- [ ] Modele: `Team`, `Standing` (+ relacje `ForeignKey` do `League`)
-- [ ] **Alembic** — narzędzie do migracji bazy: init + pierwsza migracja
-- [ ] Wyczyszczenie testowych danych (46 lig UK) — zostawiamy 6 lig + puchary
+### Sesja 3 — 8 lip [x] Modele danych + migracje Alembic + docelowe rozgrywki
+- [x] **KLUCZOWE:** test darmowego planu API-Football — rozstrzygnięte już w Sesji 1: standings tylko dla sezonów 2022–2024 (szczegóły w "Ryzykach")
+- [x] Decyzja: źródło danych żywych odłożone do startu Fazy 2 (decyzja właściciela z 2 lip — opis w "Ryzykach"); Fazy 1/3/4 na API-Football, sezon 2024/25
+- [x] Modele: `Team`, `Standing` (+ `ForeignKey` do `League`, `UniqueConstraint`, `relationship`)
+- [x] **Alembic** — init + konfiguracja (URL z `.env` przez `Settings`) + DWIE migracje (`leagues`, `teams`+`standings`); `create_all` usunięty z `main.py`
+- [x] Wyczyszczenie testowych danych (46 lig UK) — w bazie 13 docelowych rozgrywek (6 lig + 6 pucharów + LM), import przez `POST /import-leagues` z filtrem `TARGET_LEAGUE_IDS` (1 zapytanie do API)
 
 **Czego się uczysz:** relacje w bazach danych (klucze obce), migracje schematu (dlaczego `create_all` nie wystarcza), czytanie dokumentacji API.
 

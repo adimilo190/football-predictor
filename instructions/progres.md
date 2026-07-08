@@ -44,3 +44,15 @@
 * [x] `.claude/settings.local.json` — ogólne reguły uprawnień (mniej klikania „allow"); `tools.md` — notatka o WSL/Bash.
 * [x] Smoke test (`import app.main`) po każdej zmianie — zawsze OK.
 
+## Sesja 3 (2026-07-08) — Migracje Alembic, modele Team/Standing, docelowe rozgrywki
+* [x] Alembic: init + konfiguracja (`env.py`: URL bazy z `settings`, `target_metadata`, import modeli); adres bazy NIE trafia do plików w gicie.
+* [x] Migracja bazowa „czysty start": DROP testowej tabeli `leagues` → migracja `create leagues table` → `upgrade head`; baza odtwarzalna od zera jedną komendą.
+* [x] `create_all` usunięty z `main.py` — schematem bazy zarządza wyłącznie Alembic.
+* [x] Modele `Team` (bez league_id — relacja wiele-do-wielu przez standings) i `Standing` (FK do leagues/teams, season, statystyki, `UniqueConstraint(league_id, team_id, season)`); druga migracja wykonana.
+* [x] `app/constants.py` — `TARGET_LEAGUE_IDS`: 13 śledzonych rozgrywek (6 lig + 6 pucharów krajowych + Liga Mistrzów).
+* [x] `/import-leagues`: `GET`→`POST` (REST), 1 zapytanie o pełną listę lig + filtr lokalny (limit 100/dzień), odpowiedź z listą zaimportowanych nazw.
+* [x] Import wykonany: 13/13 rozgrywek w bazie, zweryfikowane przez `TestClient` i `/my-leagues`.
+* [x] `FastAPI(title="Football Predictor API")`; Ruff czysty; `requirements.txt` zaktualizowany (alembic).
+* [x] Nowa zasada współpracy w `CLAUDE.md`: jeden krok planu naraz + pytanie o zgodę przed następnym.
+* **Wynik:** Fundament danych gotowy — wersjonowany schemat (2 migracje), tabele `teams`/`standings` czekają na import tabel ligowych w Sesji 4.
+
