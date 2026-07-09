@@ -56,14 +56,15 @@
 
 **Czego się uczysz:** relacje w bazach danych (klucze obce), migracje schematu (dlaczego `create_all` nie wystarcza), czytanie dokumentacji API.
 
-### Sesja 4 — [ ] Import tabel lig (ETL)
-- [ ] Import standings 6 lig (Premier League, La Liga, Serie A, Bundesliga, Ligue 1, Primeira Liga)
-- [ ] Strategia limitów: max 100 zapytań/dzień → dane trzymamy u siebie, odświeżamy raz dziennie (endpoint `/admin/refresh` lub skrypt)
-- [ ] Upsert (update istniejących zamiast duplikatów)
+### Sesja 4 — 9 lip [x] Import tabel lig (ETL)
+- [x] Import standings 6 lig (Premier League, La Liga, Serie A, Bundesliga, Ligue 1, Primeira Liga) — `POST /import-standings`, sezon 2024/25; 114 drużyn + 114 wpisów w bazie, mistrzowie zweryfikowani
+- [x] Strategia limitów: max 100 zapytań/dzień → dane trzymamy u siebie; odświeżanie = świadome wywołanie `POST /import-standings` (6 zapytań); obsługa błędów HTTP (`raise_for_status`, timeout, błąd w treści 200 OK, pusty response → `HTTPException` 502/404)
+- [x] Upsert (update istniejących zamiast duplikatów) — aplikacyjny przez ORM, idempotencja przetestowana (2. przebieg: 0 insertów)
 
 **Czego się uczysz:** wzorzec ETL, praca z limitami zewnętrznego API, upsert, obsługa błędów HTTP.
 
 ### Sesja 5 — [ ] Publiczne endpointy + pierwsze testy
+- [ ] Schematy Pydantic dla `Team`/`Standing` (przeniesione z opcjonalnego punktu S4 — potrzebne do `response_model`)
 - [ ] `GET /leagues`, `GET /leagues/{id}/standings` (czyste dane dla frontendu)
 - [ ] **pytest** + `TestClient` — pierwsze testy API (min. 3–4 testy)
 - [ ] Struktura testów: folder `tests/`

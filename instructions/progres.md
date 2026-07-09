@@ -56,3 +56,13 @@
 * [x] Nowa zasada współpracy w `CLAUDE.md`: jeden krok planu naraz + pytanie o zgodę przed następnym.
 * **Wynik:** Fundament danych gotowy — wersjonowany schemat (2 migracje), tabele `teams`/`standings` czekają na import tabel ligowych w Sesji 4.
 
+## Sesja 4 (2026-07-09) — Import tabel lig (pełny rurociąg ETL)
+* [x] Nowa zasada w `CLAUDE.md`: po każdej sesji praca domowa (dokumentacja pod następną sesję) w logu sesji.
+* [x] `app/constants.py`: rozgrywki rozdzielone na grupy (`DOMESTIC_LEAGUE_IDS` / `DOMESTIC_CUP_IDS` / `EUROPEAN_COMPETITION_IDS`), `TARGET_LEAGUE_IDS` = scalenie `**`; stała `DEFAULT_SEASON = 2024`.
+* [x] Extract: `fetch_league_standings` — httpx z `params`/`timeout`, `raise_for_status`, obsługa pułapki „200 OK z błędem w treści" i pustego `response` → `HTTPException(502)`.
+* [x] Transform + Load: `upsert_league_standings` — upsert drużyn i wpisów tabeli przez ORM (unit of work), guard clause 404, bez commita (transakcją zarządza wywołujący), raport liczników.
+* [x] `POST /import-standings`: pętla po 6 ligach na jednym `AsyncClient`, query param `season`, jeden commit (all-or-nothing), odpowiedź z raportem per liga.
+* [x] Import zweryfikowany (TestClient): 114 drużyn / 114 wpisów; liczby drużyn per liga zgodne (20/20/20/18/18/18); mistrzowie 2024/25 poprawni; idempotencja upsertu potwierdzona (2. przebieg: 0 insertów, same update'y).
+* [x] Ruff czysty; zużycie API: 8/100 zapytań; migracji nie przybyło (zmiany tylko w danych).
+* **Wynik:** Backend ma komplet danych tabel 6 lig sezonu 2024/25 — gotowe pod publiczne endpointy i testy (Sesja 5).
+

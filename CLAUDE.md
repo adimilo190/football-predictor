@@ -16,7 +16,8 @@ Właściciel projektu dopiero uczy się używanych narzędzi (FastAPI, React, TS
 ## Rytuał końca sesji (OBOWIĄZKOWY)
 1. Napisz log `instructions/sessions/session-NN.md`: co zrobiono, jakie decyzje i dlaczego, czego się nauczyliśmy, dokładne TODO na następną sesję.
 2. Zaktualizuj statusy w `instructions/ROADMAP.md` i dopisz sekcję w `instructions/progres.md`.
-3. Commit (message po angielsku, opisowy) + push na GitHub.
+3. **Zadaj pracę domową:** wypisz konkretną dokumentację/materiały do przeczytania przed następną sesją — powiązane z TODO następnej sesji. Dla każdej pozycji podaj link, po co to (jaki koncept/narzędzie) i na co zwrócić uwagę. Dopisz to na końcu logu sesji jako sekcję „Praca domowa".
+4. Commit (message po angielsku, opisowy) + push na GitHub.
 
 ## Środowisko (ważne szczegóły techniczne)
 - Kod żyje w WSL: `/home/micmilo190/football-predictor` (z Windows: `\\wsl.localhost\ubuntu\home\micmilo190\football-predictor`).
