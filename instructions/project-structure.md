@@ -2,7 +2,7 @@
 
 > Streszczenie całego projektu w jednym miejscu: co jest w każdym pliku/folderze i po co.
 > **Ten plik aktualizujemy przy każdej zmianie struktury** (nowy plik/folder = nowy wpis tutaj).
-> Stan na: Sesja 3 (2026-07-08).
+> Stan na: Sesja 5 (2026-08-03).
 
 ---
 
@@ -11,6 +11,7 @@
 | Plik / folder | Co to jest i po co |
 |---|---|
 | `app/` | **Cały kod backendu** (pakiet Pythona) — szczegóły niżej |
+| `tests/` | **Testy pytest** (`test_main.py`) — sprawdzają endpointy przez `TestClient`, bez uruchamiania serwera. `__init__.py` sprawia, że pytest dokłada katalog projektu do `sys.path` |
 | `alembic/` + `alembic.ini` | **Migracje bazy danych** — szczegóły niżej |
 | `instructions/` | **Dokumentacja projektu** (plany, logi, decyzje) — szczegóły niżej |
 | `venv/` | Wirtualne środowisko Pythona (izolowane paczki projektu). NIE w gicie. Używamy `venv/bin/python`, `venv/bin/pip` |
@@ -21,7 +22,7 @@
 | `CLAUDE.md` | Zasady współpracy z Claude: tryb nauki, rytm pracy (jeden krok naraz), rytuał końca sesji, szczegóły środowiska (WSL, venv, PostgreSQL) |
 | `.claude/` | Ustawienia Claude Code dla tego projektu (`settings.local.json` — uprawnienia narzędzi) |
 | `.git/` | Wewnętrzna baza gita (historia commitów). Nie ruszamy ręcznie |
-| `__pycache__/`, `.ruff_cache/` | Automatyczne cache Pythona i Ruffa — można bezpiecznie skasować, odtworzą się same. NIE w gicie |
+| `__pycache__/`, `.ruff_cache/`, `.pytest_cache/` | Automatyczne cache Pythona / Ruffa / pytest — można bezpiecznie skasować, odtworzą się same. NIE w gicie |
 
 ---
 
@@ -35,11 +36,22 @@ Pakiet Pythona (ma `__init__.py`). Warstwy od spodu do góry:
 | `config.py` | **Jedno źródło konfiguracji.** Klasa `Settings` (pydantic-settings) wczytuje `.env`, waliduje i głośno krzyczy na starcie, jeśli czegoś brakuje. Reszta kodu robi `from app.config import settings` |
 | `database.py` | **Połączenie z PostgreSQL**: `engine` (fizyczne połączenie), `SessionLocal` (fabryka sesji — jedna sesja = jedna „rozmowa" z bazą), `Base` (klasa bazowa, z której dziedziczą modele) |
 | `models.py` | **Modele SQLAlchemy = tabele w bazie**: `League` (rozgrywki), `Team` (drużyna — celowo bez przypisania do ligi, bo gra w wielu rozgrywkach), `Standing` (wiersz tabeli ligowej: liga + drużyna + sezon + statystyki; klucze obce i blokada duplikatów) |
-| `schemas.py` | **Schematy Pydantic = kontrakt API**: co dokładnie endpointy zwracają na zewnątrz (np. `LeagueResponse`). Osobna warstwa od `models.py`: baza może mieć więcej pól niż pokazujemy światu |
-| `constants.py` | **Stałe biznesowe**: `TARGET_LEAGUE_IDS` — ID 13 śledzonych rozgrywek w API-Football (6 lig + 6 pucharów krajowych + Liga Mistrzów) |
-| `main.py` | **Serce API**: tworzy aplikację FastAPI i definiuje endpointy — `GET /` (test), `POST /import-leagues` (pobiera rozgrywki z API-Football do naszej bazy), `GET /my-leagues` (pokazuje naszą bazę). Dokumentacja interaktywna: `/docs` (Swagger UI) |
+| `schemas.py` | **Schematy Pydantic = kontrakt API**: co endpointy zwracają na zewnątrz — `LeagueResponse`, `TeamResponse`, `StandingResponse` (ten ostatni z zagnieżdżoną drużyną). Osobna warstwa od `models.py`: baza może mieć więcej pól niż pokazujemy światu |
+| `constants.py` | **Stałe biznesowe**: `TARGET_LEAGUE_IDS` — ID 13 śledzonych rozgrywek (6 lig + 6 pucharów + LM), rozbite na grupy; `DEFAULT_SEASON = 2024` |
+| `main.py` | **Serce API**: tworzy aplikację FastAPI i definiuje endpointy — `GET /` (test), `POST /import-leagues` i `POST /import-standings` (ETL z API-Football), `GET /leagues` (lista lig), `GET /leagues/{id}/standings` (tabela ligowa, sort po `rank`, `joinedload`). Dokumentacja interaktywna: `/docs` (Swagger UI) |
 
 **Przepływ danych:** `.env` → `config.py` → `database.py` → `models.py` → (`schemas.py` +) `main.py`.
+
+---
+
+## `tests/` — testy automatyczne (pytest)
+
+| Plik | Co robi |
+|---|---|
+| `__init__.py` | Robi z `tests/` pakiet — efekt uboczny: pytest dokłada katalog projektu do `sys.path`, więc działa `from app.main import app` |
+| `test_main.py` | Testy endpointów przez `TestClient` (woła API bez uruchamiania serwera): `/`, `/leagues`, `/leagues/{id}/standings` (m.in. `rank==1` i zagnieżdżona drużyna), błędne id → 404 |
+
+**Uruchomienie:** `venv/bin/pytest -v` (w WSL). Na razie testy korzystają z prawdziwej bazy deweloperskiej — osobna baza testowa (override `get_db`) to zaplanowany refaktor.
 
 ---
 
@@ -80,15 +92,14 @@ Nie jest plikiem w repo, ale to część projektu:
 | Tabela | Co trzyma |
 |---|---|
 | `leagues` | 13 śledzonych rozgrywek (id z API-Football, nazwa, kraj, logo) |
-| `teams` | Drużyny (na razie pusta — wypełni ją import standings w Sesji 4) |
-| `standings` | Wiersze tabel ligowych: liga + drużyna + sezon + statystyki (na razie pusta) |
+| `teams` | Drużyny — 114 (wypełnione importem standings w Sesji 4) |
+| `standings` | Wiersze tabel ligowych: liga + drużyna + sezon + statystyki — 114 (sezon 2024) |
 | `alembic_version` | „Zakładka" Alembica — ID aktualnie wykonanej migracji |
 
 ---
 
 ## Co dojdzie później (wg ROADMAP)
 
-- `tests/` — testy pytest (od Sesji 5)
 - `frontend/` — React + TypeScript + Vite + Tailwind (od Sesji 7)
-- `app/routers/` — podział endpointów na moduły, gdy ich przybędzie
+- `app/routers/` — podział endpointów na moduły, gdy ich przybędzie (planowane na Sesję 6)
 - `app/prediction/` — model Poissona (Sesja 16)

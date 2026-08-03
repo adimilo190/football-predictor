@@ -66,3 +66,12 @@
 * [x] Ruff czysty; zużycie API: 8/100 zapytań; migracji nie przybyło (zmiany tylko w danych).
 * **Wynik:** Backend ma komplet danych tabel 6 lig sezonu 2024/25 — gotowe pod publiczne endpointy i testy (Sesja 5).
 
+## Sesja 5 (2026-08-03) — Publiczne endpointy odczytu + pierwsze testy (pytest)
+* [x] `app/schemas.py`: `TeamResponse` (bliźniak `LeagueResponse`) i `StandingResponse` z **zagnieżdżonym** `team: TeamResponse` (relacja `Standing.team` + `from_attributes` → jedno zapytanie z frontendu zamiast dwóch).
+* [x] `GET /leagues` — rename dawnego `/my-leagues` na konwencję REST (`get_leagues`); grep potwierdził brak wiszących referencji w kodzie.
+* [x] `GET /leagues/{league_id}/standings` — path param, `season` jako query param z `DEFAULT_SEASON`, `404` gdy ligi brak, sort po `rank`, `response_model=list[StandingResponse]`.
+* [x] `joinedload(models.Standing.team)` przeciw N+1 — demo na żywej bazie: bez niego **21** zapytań (1 + 20 na drużyny), z nim **1** (JOIN). Endpoint zweryfikowany: Liverpool → Arsenal → City (PL 2024/25).
+* [x] `pytest 9.1.1` zainstalowany (`requirements.txt` zamrożony); folder `tests/` (`__init__.py` + `test_main.py`), 4 testy przez `TestClient` (root, `/leagues`, standings z `rank==1` i zagnieżdżoną drużyną, błędne id → 404) — 4/4 zielone; Ruff czysty (`app/` + `tests/`).
+* **Zmiana trybu pracy:** właściciel sam pisze kod, Claude prowadzi i robi review (nie wpisuje kodu za niego); wyjątek na wyraźną prośbę.
+* **Wynik:** API ma czyste endpointy odczytu pod frontend i pierwszą siatkę testów. `app/routers/` odłożone do Sesji 6.
+

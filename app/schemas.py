@@ -27,3 +27,39 @@ class LeagueResponse(BaseModel):
     # plain dict. Without it, FastAPI could not turn a database object into this
     # response.
     model_config = ConfigDict(from_attributes=True)
+
+
+class TeamResponse(BaseModel):
+    """Shape of a single team returned by the API."""
+
+    id: int
+    name: str
+    country: str
+    logo_url: str | None = None
+
+    # Same trick as LeagueResponse: build this straight from a SQLAlchemy Team.
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StandingResponse(BaseModel):
+    """One row of a league table, ready for the frontend to render.
+
+    Instead of a bare team_id number, we NEST the whole team (name + logo), so
+    the frontend can draw a full table row from a single response — it never has
+    to ask again "who is team 50?". Pydantic follows the Standing.team
+    relationship and turns that Team object into a TeamResponse for us.
+    """
+
+    rank: int
+    team: TeamResponse
+    played: int
+    wins: int
+    draws: int
+    losses: int
+    goals_for: int
+    goals_against: int
+    points: int
+    # Recent form (e.g. "WWDLW") can be missing, so allow None.
+    form: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)

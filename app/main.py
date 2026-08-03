@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 import httpx
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.config import settings
 from app import models, schemas
@@ -253,8 +253,35 @@ async def import_standings(season: int = DEFAULT_SEASON, db: Session = Depends(g
 # --- 3. ENDPOINT: SHOW YOUR OWN DATABASE ---
 # response_model=list[...] tells FastAPI: "this endpoint returns a LIST of leagues,
 # each in the LeagueResponse shape". FastAPI filters out anything outside the schema.
-@app.get("/my-leagues", response_model=list[schemas.LeagueResponse])
-def get_my_leagues(db: Session = Depends(get_db)):
+@app.get("/leagues", response_model=list[schemas.LeagueResponse])
+def get_leagues(db: Session = Depends(get_db)):
     # Plain Python query; SQLAlchemy translates it into: SELECT * FROM leagues;
     leagues = db.query(models.League).all()
     return leagues
+
+
+@app.get(
+    "/leagues/{league_id}/standings", response_model=list[schemas.StandingResponse]
+)
+def get_league_standings(
+    league_id: int, season: int = DEFAULT_SEASON, db: Session = Depends(get_db)
+):
+    # Check if the league exists first; if not, return 404.
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if league is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"League {league_id} not found in database.",
+        )
+
+    # Fetch all standings for this league, ordered by rank.
+    standings = (
+        db.query(models.Standing)
+        .options(joinedload(models.Standing.team))
+        .filter(
+            models.Standing.league_id == league_id, models.Standing.season == season
+        )
+        .order_by(models.Standing.rank)
+        .all()
+    )
+    return standings

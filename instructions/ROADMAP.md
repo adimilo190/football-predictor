@@ -63,11 +63,12 @@
 
 **Czego się uczysz:** wzorzec ETL, praca z limitami zewnętrznego API, upsert, obsługa błędów HTTP.
 
-### Sesja 5 — [ ] Publiczne endpointy + pierwsze testy
-- [ ] Schematy Pydantic dla `Team`/`Standing` (przeniesione z opcjonalnego punktu S4 — potrzebne do `response_model`)
-- [ ] `GET /leagues`, `GET /leagues/{id}/standings` (czyste dane dla frontendu)
-- [ ] **pytest** + `TestClient` — pierwsze testy API (min. 3–4 testy)
-- [ ] Struktura testów: folder `tests/`
+### Sesja 5 — 3 sie [x] Publiczne endpointy + pierwsze testy
+- [x] Schematy Pydantic `TeamResponse`/`StandingResponse` (`StandingResponse` z zagnieżdżoną drużyną)
+- [x] `GET /leagues` (rename z `/my-leagues`), `GET /leagues/{id}/standings` (path param, sezon, sort po `rank`, `joinedload` przeciw N+1)
+- [x] **pytest** + `TestClient` — 4 testy API (root, `/leagues`, standings, błędne id → 404), wszystkie zielone
+- [x] Struktura testów: folder `tests/` (`pytest` zainstalowany, `requirements.txt` zamrożony)
+- [~] `app/routers/` — rozważone, ODŁOŻONE do Sesji 6 (`main.py` wciąż czytelny)
 
 **Czego się uczysz:** pisanie testów automatycznych, dlaczego testy to must-have w CV.
 
