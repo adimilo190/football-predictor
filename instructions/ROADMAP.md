@@ -11,7 +11,7 @@
 | Termin  | Kamień milowy                                              | Status |
 |---------|------------------------------------------------------------|--------|
 | 6 lip   | Repo na GitHubie, sekrety w `.env`, backend uporządkowany  | [x]    |
-| 20 lip  | **Faza 1 backend**: tabele lig + puchary w bazie i API     | [ ]    |
+| 20 lip  | **Faza 1 backend**: tabele lig + puchary w bazie i API     | [x]    |
 | 10 sie  | **Faza 1 komplet**: UI tabel i drabinek działa             | [ ]    |
 | 24 sie  | **Faza 2 komplet**: ulubione drużyny + dashboard           | [ ]    |
 | 7 wrz   | **Faza 3 komplet**: predictor (model Poissona)             | [ ]    |
@@ -72,13 +72,14 @@
 
 **Czego się uczysz:** pisanie testów automatycznych, dlaczego testy to must-have w CV.
 
-### Sesja 6 — [ ] Puchary i drabinki
-- [ ] Model `Fixture` (mecz: drużyny, wynik, data, runda, status)
-- [ ] Import meczów pucharowych: puchary krajowe (FA Cup, Copa del Rey, Coppa Italia, DFB-Pokal, Coupe de France, Taça de Portugal) + Liga Mistrzów
-- [ ] Endpoint `GET /cups/{id}/bracket` — dane pogrupowane rundami
-- [ ] Migracja Alembic nr 2
+### Sesja 6 — 5 sie [x] Puchary i drabinki
+- [x] Model `Fixture` (mecz: drużyny home/away, wynik, data, runda, status) — dwa FK do `teams` + `foreign_keys=`
+- [x] Import meczów pucharowych: 6 pucharów krajowych + Liga Mistrzów (`POST /import-fixtures`, 1733 mecze, sezon 2024)
+- [x] Endpointy `GET /leagues/{id}/fixtures` (płaska lista) i `GET /leagues/{id}/bracket` (pogrupowane rundami, sort po dacie)
+- [x] Migracja Alembic nr 3 (`create fixtures table`)
+- [~] Routery (`app/routers/`) + testy — PRZENIESIONE do Sesji 7 (porządki backendu przed frontendem; frontend przesuwa się o sesję)
 
-**Czego się uczysz:** modelowanie bardziej złożonych danych, grupowanie/transformacja danych pod UI.
+**Czego się uczysz:** modelowanie bardziej złożonych danych (dwa FK do jednej tabeli), grupowanie/transformacja danych pod UI, odporność ETL na braki danych.
 
 ---
 

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
-
+from sqlalchemy.sql.sqltypes import DateTime
 from app.database import Base
 
 
@@ -76,3 +76,24 @@ class Standing(Base):
     # Python-side navigation back to the related objects.
     league = relationship("League", back_populates="standings")
     team = relationship("Team", back_populates="standings")
+
+
+class Fixture(Base):
+    """A single match; cups have no table, only fixtures grouped by round"""
+
+    __tablename__ = "fixtures"
+    id = Column(Integer, primary_key=True, index=True)
+    league_id = Column(Integer, ForeignKey("leagues.id"), nullable=False)
+    season = Column(Integer, nullable=False)
+    round = Column(String)
+    date = Column(DateTime, nullable=False)
+    home_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    status = Column(String)
+    home_goals = Column(Integer)
+    away_goals = Column(Integer)
+    league = relationship("League")
+    # Two FKs point at teams, so SQLAlchemy needs foreign_keys= to know
+    # which column feeds which relationship (home vs away).
+    home_team = relationship("Team", foreign_keys=[home_team_id])
+    away_team = relationship("Team", foreign_keys=[away_team_id])

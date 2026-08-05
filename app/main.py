@@ -1,11 +1,18 @@
 from fastapi import FastAPI, Depends, HTTPException
 import httpx
 from sqlalchemy.orm import Session, joinedload
+from datetime import datetime
 
 from app.config import settings
 from app import models, schemas
-from app.constants import DEFAULT_SEASON, DOMESTIC_LEAGUE_IDS, TARGET_LEAGUE_IDS
 from app.database import SessionLocal
+from app.constants import (
+    DEFAULT_SEASON,
+    DOMESTIC_CUP_IDS,
+    DOMESTIC_LEAGUE_IDS,
+    EUROPEAN_COMPETITION_IDS,
+    TARGET_LEAGUE_IDS,
+)
 
 # NOTE: tables are no longer created here. The database schema is managed
 # exclusively by Alembic migrations — run: alembic upgrade head
@@ -56,13 +63,11 @@ async def fetch_league_standings(
             detail=f"API-Football error for league {league_id}: {data['errors']}",
         )
 
-    # Unknown league/season combinations come back as an empty "response".
+    # Empty response = season not available on the free plan (a legitimate gap),
+    # so return no rows instead of failing. Real failures were caught above.
     api_response = data.get("response", [])
     if not api_response:
-        raise HTTPException(
-            status_code=502,
-            detail=f"No standings for league {league_id}, season {season}",
-        )
+        return []
 
     # The table rows sit deep in the payload: response[0].league.standings
     # is a LIST OF LISTS (groups). A regular league has exactly one group,
@@ -150,6 +155,144 @@ def upsert_league_standings(
     return stats
 
 
+async def fetch_fixtures(
+    client: httpx.AsyncClient, league_id: int, season: int
+) -> list[dict]:
+    """Fetch one competition's fixtures from API-Football (the Extract step of ETL).
+
+    Works for any competition id (league or cup) — API-Football treats them
+    the same. Returns the raw match rows (dicts) exactly as the API sends them;
+    turning them into our database models is a separate (Transform) step.
+    """
+    try:
+        # params builds the query string (?league=39&season=2024) and handles
+        # the encoding for us. timeout: give up instead of hanging forever.
+        response = await client.get(
+            f"{settings.API_FOOTBALL_BASE_URL}/fixtures",
+            headers=HEADERS,
+            params={"league": league_id, "season": season},
+            timeout=15.0,
+        )
+        # Turn any 4xx/5xx answer into an exception instead of reading garbage.
+        response.raise_for_status()
+    except httpx.HTTPError as exc:
+        # Covers bad statuses AND transport problems (timeout, DNS, refused
+        # connection). 502 = "our upstream data source failed", not our fault.
+        raise HTTPException(
+            status_code=502,
+            detail=f"API-Football request failed for fixtures {league_id}: {exc}",
+        ) from exc
+
+    data = response.json()
+
+    # API-Football quirk: it can answer 200 OK and still report problems
+    # (e.g. exceeded daily limit) inside an "errors" field of the body.
+    if data.get("errors"):
+        raise HTTPException(
+            status_code=502,
+            detail=f"API-Football error for fixtures {league_id}: {data['errors']}",
+        )
+
+    # Empty response is a legitimate gap (free plan), so return no matches.
+    # Real failures were already caught above (HTTP error / "errors" field).
+    return data.get("response", [])
+
+
+def upsert_team(db: Session, team_info: dict) -> bool:
+    """Insert a team if new, else refresh its mutable fields.
+
+    The fixtures payload has no country, so a brand-new team gets country=None;
+    an existing team keeps whatever country it already has (e.g. set by the
+    standings import). Returns True when a new team was inserted.
+    """
+    # 1. Look for the team by its API id. .first() returns the object or None.
+    team = db.query(models.Team).filter(models.Team.id == team_info["id"]).first()
+
+    # 2. Not found: create it. Often a lower-league or foreign side that is not
+    #    in our standings. A fixtures payload has no country, so leave it empty.
+    if team is None:
+        team = models.Team(
+            id=team_info["id"],
+            name=team_info["name"],
+            country=None,
+            logo_url=team_info["logo"],
+        )
+        db.add(team)
+        return True
+
+    # 3. Already exists: refresh only what can change (name, logo). We do NOT
+    #    touch country — it may already be set correctly by the standings import.
+    team.name = team_info["name"]
+    team.logo_url = team_info["logo"]
+    return False
+
+
+def upsert_fixtures(
+    db: Session, league_id: int, season: int, fixtures: list[dict]
+) -> dict[str, int]:
+    """Save raw fixtures into teams/fixtures (the Transform + Load steps).
+
+    "Upsert" = UPDATE the row if it already exists, INSERT it otherwise.
+    Both teams of every match are upserted first (cups include sides from
+    lower leagues that our standings import never saw), then the fixture
+    itself. No db.commit() here — the caller decides when to commit.
+    """
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if league is None:
+        raise HTTPException(
+            404,
+            detail=f"League {league_id} not in database — run /import-leagues first",
+        )
+
+    stats = {"teams_added": 0, "fixtures_added": 0, "fixtures_updated": 0}
+
+    # A cup team plays several rounds, so it recurs across fixtures. With
+    # autoflush=False a freshly added team stays invisible to the next query
+    # until commit — upserting it twice would duplicate its primary key. So
+    # handle each team id only once per import.
+    seen_team_ids: set[int] = set()
+
+    for fx in fixtures:
+        home_team = fx["teams"]["home"]
+        away_team = fx["teams"]["away"]
+        # -- Team upsert (once per team within this transaction) --
+        for team in (home_team, away_team):
+            if team["id"] not in seen_team_ids:
+                if upsert_team(db, team):
+                    stats["teams_added"] += 1
+                seen_team_ids.add(team["id"])
+        # -- Fixture upsert --
+        fixture = (
+            db.query(models.Fixture)
+            .filter(models.Fixture.id == fx["fixture"]["id"])
+            .first()
+        )
+        if fixture is None:
+            fixture = models.Fixture(
+                id=fx["fixture"]["id"],
+                league_id=league_id,
+                home_team_id=home_team["id"],
+                away_team_id=away_team["id"],
+                season=season,
+            )
+            db.add(fixture)
+            stats["fixtures_added"] += 1
+        else:
+            stats["fixtures_updated"] += 1
+
+        # Copy the statistics — same code for a new and an existing row.
+        # SQLAlchemy tracks attribute changes and emits UPDATEs on commit.
+        fixture.round = fx["league"]["round"]
+        fixture.date = datetime.fromisoformat(fx["fixture"]["date"])
+        fixture.status = fx["fixture"]["status"]["short"]
+        fixture.home_goals = fx["goals"]["home"]
+        fixture.away_goals = fx["goals"]["away"]
+
+    # NOTE: no db.commit() here on purpose — the caller decides when to commit,
+    # so importing 6 leagues can be one all-or-nothing transaction.
+    return stats
+
+
 # --- DATABASE HELPER ---
 # Opens a database session for the duration of a request and closes it afterwards.
 def get_db():
@@ -160,14 +303,18 @@ def get_db():
         db.close()
 
 
+# Health check: a simple ping confirming the server and DB are reachable.
 @app.get("/")
 def read_root():
     return {"message": "Witaj w Football Predictor API! Serwer i baza działają."}
 
 
-# --- 1. ENDPOINT: FETCH FROM THE API AND SAVE TO THE DATABASE ---
-# POST, not GET: this endpoint changes the database, and GET requests
-# are expected to be "safe" (read-only) by REST conventions.
+# --- WRITE ENDPOINTS (POST): pull data from API-Football into our database ---
+# POST, not GET: these change the database, while GET stays "safe" (read-only)
+# by REST convention. Each import is manual and deliberate — the free plan
+# allows only 100 API requests/day.
+# import-leagues: one call for the full league list, filtered locally to the
+# ids we track (TARGET_LEAGUE_IDS) — cheaper than one request per competition.
 @app.post("/import-leagues")
 async def import_leagues(db: Session = Depends(get_db)):
     async with httpx.AsyncClient() as client:
@@ -218,9 +365,8 @@ async def import_leagues(db: Session = Depends(get_db)):
     }
 
 
-# --- 2. ENDPOINT: IMPORT LEAGUE TABLES (THE FULL ETL PIPELINE) ---
-# Costs one API request per league (6 total) out of the 100/day free budget,
-# so refreshing the data is a conscious, manual action — not automatic.
+# import-standings: full ETL for the 6 league tables — one API call per
+# division. Extract (fetch_league_standings) then Transform+Load (upsert_...).
 @app.post("/import-standings")
 async def import_standings(season: int = DEFAULT_SEASON, db: Session = Depends(get_db)):
     # Per-league stats for the response + running totals across all leagues.
@@ -250,9 +396,33 @@ async def import_standings(season: int = DEFAULT_SEASON, db: Session = Depends(g
     }
 
 
-# --- 3. ENDPOINT: SHOW YOUR OWN DATABASE ---
-# response_model=list[...] tells FastAPI: "this endpoint returns a LIST of leagues,
-# each in the LeagueResponse shape". FastAPI filters out anything outside the schema.
+# import-fixtures: full ETL for cup matches — one API call per competition
+# (6 domestic cups + UCL). Empty competitions are tolerated (fetch returns []),
+# so a gap in one does not abort the whole import.
+@app.post("/import-fixtures")
+async def import_fixtures(season: int = DEFAULT_SEASON, db: Session = Depends(get_db)):
+    cups_report = {}
+    totals = {"teams_added": 0, "fixtures_added": 0, "fixtures_updated": 0}
+    competitions = {**DOMESTIC_CUP_IDS, **EUROPEAN_COMPETITION_IDS}  # 6 cups + UCL
+    async with httpx.AsyncClient() as client:
+        for league_id, name in competitions.items():
+            fixtures = await fetch_fixtures(client, league_id, season)
+            stats = upsert_fixtures(db, league_id, season, fixtures)
+            cups_report[name] = stats
+            for key in totals:
+                totals[key] += stats[key]
+    db.commit()  # one commit = one all-or-nothing transaction
+    return {
+        "message": f"Imported fixtures for {len(cups_report)} competitions.",
+        "season": season,
+        "totals": totals,
+        "cups": cups_report,
+    }
+
+
+# --- READ ENDPOINTS (GET): serve our own database to the frontend ---
+# response_model=list[...] tells FastAPI the response shape (a list of
+# LeagueResponse); it validates the output and drops anything not in the schema.
 @app.get("/leagues", response_model=list[schemas.LeagueResponse])
 def get_leagues(db: Session = Depends(get_db)):
     # Plain Python query; SQLAlchemy translates it into: SELECT * FROM leagues;
@@ -285,3 +455,68 @@ def get_league_standings(
         .all()
     )
     return standings
+
+
+@app.get(
+    "/leagues/{league_id}/fixtures",
+    response_model=list[schemas.FixtureResponse],
+)
+def get_league_fixtures(
+    league_id: int, season: int = DEFAULT_SEASON, db: Session = Depends(get_db)
+):
+    # Check if the league exists first; if not, return 404.
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if league is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"League {league_id} not found in database.",
+        )
+
+    # Fetch all fixtures for this league, ordered by date.
+    fixtures = (
+        db.query(models.Fixture)
+        .options(
+            joinedload(models.Fixture.home_team),
+            joinedload(models.Fixture.away_team),
+        )
+        .filter(models.Fixture.league_id == league_id, models.Fixture.season == season)
+        .order_by(models.Fixture.date)
+        .all()
+    )
+    return fixtures
+
+
+@app.get("/leagues/{league_id}/bracket", response_model=list[schemas.BracketRound])
+def get_league_bracket(
+    league_id: int, season: int = DEFAULT_SEASON, db: Session = Depends(get_db)
+):
+    # Check if the league exists first; if not, return 404.
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if league is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"League {league_id} not found in database.",
+        )
+    # Fetch all fixtures for this league, ordered by date.
+    fixtures = (
+        db.query(models.Fixture)
+        .options(
+            joinedload(models.Fixture.home_team),
+            joinedload(models.Fixture.away_team),
+        )
+        .filter(models.Fixture.league_id == league_id, models.Fixture.season == season)
+        .order_by(models.Fixture.date)
+        .all()
+    )
+    # Group matches by round. Fixtures are already date-sorted, so the FIRST
+    # time a round appears fixes its position — and a Python dict preserves
+    # insertion order, so rounds come out chronologically (qualifiers -> final).
+    rounds: dict[str, list] = {}
+    for fx in fixtures:
+        if fx.round not in rounds:
+            rounds[fx.round] = []
+        rounds[fx.round].append(fx)
+    result = []
+    for round_name, matches in rounds.items():
+        result.append(schemas.BracketRound(round=round_name, fixtures=matches))
+    return result

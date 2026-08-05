@@ -9,6 +9,8 @@
 # Keeping them separate means a database change won't accidentally leak new,
 # internal fields to the outside world.
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -34,7 +36,7 @@ class TeamResponse(BaseModel):
 
     id: int
     name: str
-    country: str
+    country: str | None = None
     logo_url: str | None = None
 
     # Same trick as LeagueResponse: build this straight from a SQLAlchemy Team.
@@ -63,3 +65,25 @@ class StandingResponse(BaseModel):
     form: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class FixtureResponse(BaseModel):
+    """A single match, ready for the frontend (both teams nested)."""
+
+    id: int
+    round: str | None = None
+    date: datetime
+    status: str | None = None
+    home_goals: int | None = None
+    away_goals: int | None = None
+    home_team: TeamResponse
+    away_team: TeamResponse
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BracketRound(BaseModel):
+    """One round of a cup with its matches — a single column in the bracket UI."""
+
+    round: str
+    fixtures: list[FixtureResponse]

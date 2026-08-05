@@ -75,3 +75,13 @@
 * **Zmiana trybu pracy:** właściciel sam pisze kod, Claude prowadzi i robi review (nie wpisuje kodu za niego); wyjątek na wyraźną prośbę.
 * **Wynik:** API ma czyste endpointy odczytu pod frontend i pierwszą siatkę testów. `app/routers/` odłożone do Sesji 6.
 
+## Sesja 6 (2026-08-05) — Puchary i drabinki (model Fixture, ETL, endpointy bracket)
+* [x] Model `Fixture`: dwa klucze obce do `teams` (`home_team_id`/`away_team_id`) + `foreign_keys=` na relacjach; `id` reużyty z API; `date` jako `DateTime`; gole nullable. Migracja Alembic **nr 3** (`03d5cc4db1d2`) — autogenerate, przejrzana, zastosowana.
+* [x] Pełny ETL importu meczów: `fetch_fixtures` (Extract, generyczny — działa dla dowolnej rozgrywki), `upsert_team` (helper, `country=None` dla drużyn pucharowych), `upsert_fixtures` (Transform+Load: guard, dedup drużyn, parsowanie daty ISO, upsert po `id`), `POST /import-fixtures` (pętla po 7 pucharach, one commit).
+* [x] Odporność ETL na braki danych (decyzja właściciela): pusty `response` → `[]` (toleruj), awarie API (`errors`/HTTP) nadal → `502`. Zastosowane w OBU fetchach.
+* [x] Import zweryfikowany na żywo: **1733 mecze / 1267 drużyn / 7 rozgrywek**, sezon 2024. Bug `duplicate key` (przez `autoflush=False` + drużyny grające wiele rund) rozwiązany deduplikacją w pamięci.
+* [x] Schematy: `FixtureResponse` (dwie zagnieżdżone drużyny, gole nullable), `BracketRound` (bez `from_attributes` — budowany ręcznie); `TeamResponse.country` → `str | None`.
+* [x] `GET /leagues/{id}/fixtures` (płaska lista, podwójny `joinedload`, sort po dacie) + `GET /leagues/{id}/bracket` (grupowanie po rundzie, `dict` insertion order = kolejność turnieju). Drabinka LM 2024/25 zweryfikowana: 17 rund w kolejności, finał PSG 5-0 Inter.
+* [x] Porządki: komentarze sekcji endpointów (numeracja → grupy WRITE/READ, PL → EN).
+* **Wynik:** Faza 1 backend **kompletna** — ligi + puchary w bazie i API. Do Sesji 7: podział `main.py` na routery (+ helper `query_fixtures`) i testy pytest.
+
