@@ -77,13 +77,15 @@
 - [x] Import meczów pucharowych: 6 pucharów krajowych + Liga Mistrzów (`POST /import-fixtures`, 1733 mecze, sezon 2024)
 - [x] Endpointy `GET /leagues/{id}/fixtures` (płaska lista) i `GET /leagues/{id}/bracket` (pogrupowane rundami, sort po dacie)
 - [x] Migracja Alembic nr 3 (`create fixtures table`)
-- [~] Routery (`app/routers/`) + testy — PRZENIESIONE do Sesji 7 (porządki backendu przed frontendem; frontend przesuwa się o sesję)
+- [x] Routery (`app/routers/`) + testy — **ZROBIONE w Sesji 7** (log `sessions/session-07.md`): `competitions.py` + `imports.py`, helper `query_fixtures`, `get_db` → `database.py`, 6 testów pytest z izolowaną bazą
 
 **Czego się uczysz:** modelowanie bardziej złożonych danych (dwa FK do jednej tabeli), grupowanie/transformacja danych pod UI, odporność ETL na braki danych.
 
 ---
 
 ## BLOK 2 — Frontend od zera + UI Fazy 1 (tygodnie 4–6: 21 lip – 10 sie)
+
+> **Postęp (5 sie):** backend Fazy 1 domknięty dodatkową sesją porządkową — routery + testy pytest (log `sessions/session-07.md`). Numery sesji poniżej to **fazy**; kalendarzowo ruszają o jedną później (doszła sesja porządkowa). Nie przenumerowujemy — plan służy nam (ryzyko #4).
 
 ### Sesja 7 — [ ] Start frontendu
 - [ ] Node.js w WSL (przez `nvm`), czym jest npm i `package.json`

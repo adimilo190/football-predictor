@@ -85,3 +85,10 @@
 * [x] Porządki: komentarze sekcji endpointów (numeracja → grupy WRITE/READ, PL → EN).
 * **Wynik:** Faza 1 backend **kompletna** — ligi + puchary w bazie i API. Do Sesji 7: podział `main.py` na routery (+ helper `query_fixtures`) i testy pytest.
 
+## Sesja 7 (2026-08-05) — Porządki backendu: testy pytest + routery
+* [x] **Infrastruktura testowa** (`tests/conftest.py`): izolowana baza SQLite **in-memory** (`StaticPool` + `check_same_thread=False`), podmiana `get_db` przez `app.dependency_overrides`, autouse fixture `reset_database` (czysta baza per test), fixtures `client` i `db_session`.
+* [x] **6 testów** endpointów odczytu (Arrange–Act–Assert, seed własnych danych): `/leagues`, `/standings`, `/fixtures`, `/bracket` (dowód sortowania rund po dacie) + root + 404. Testy `/fixtures` i `/bracket` napisał właściciel (Claude: prowadzenie + review).
+* [x] **Refaktor `main.py` 522 → 23 linie** na routery: `get_db` → `database.py` (uniknięcie cyklu importów), `app/routers/competitions.py` (odczyty + helper `query_fixtures`, DRY), `app/routers/imports.py` (zapisy + ETL). Wykonany krok po kroku z `pytest` po każdym kroku.
+* [x] Weryfikacja: 6/6 testów zielone przez cały refaktor, Ruff czysty, smoke `import app.main` → 12 tras. Zero zapytań do API-Football, bez nowych migracji.
+* **Wynik:** Backend Fazy 1 domknięty i uporządkowany (routery + testy). Gotowe pod start frontendu (Sesja 8).
+

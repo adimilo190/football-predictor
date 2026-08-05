@@ -19,3 +19,14 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # 3. BASE: the base class. Our models (e.g. League) inherit from it, and
 #    SQLAlchemy turns them into physical tables in PostgreSQL.
 Base = declarative_base()
+
+
+# 4. DB DEPENDENCY: open a session for one request, and guarantee it is closed.
+#    It lives HERE (not in main.py) so the routers can import it without an import
+#    cycle — main.py imports the routers, so the routers must not import from main.
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

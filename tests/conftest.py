@@ -14,8 +14,8 @@ from sqlalchemy.pool import StaticPool
 # tables to build — without this import the metadata is empty and create_all()
 # would silently create nothing. The import looks unused, hence the noqa.
 from app import models  # noqa: F401
-from app.database import Base
-from app.main import app, get_db
+from app.database import Base, get_db
+from app.main import app
 
 # 1. TEST ENGINE — a throwaway SQLite database that lives entirely in RAM.
 #    Completely separate from the real PostgreSQL engine in app/database.py,
