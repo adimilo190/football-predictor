@@ -111,7 +111,7 @@ def test_get_fixtures(client, db_session):
     assert data[0]["away_team"]["name"] == "Legia Warszawa"
 
 
-def test_get_bracket(client, db_session):
+def test_get_bracket_all_stages(client, db_session):
     """GET /leagues/{id}/bracket returns the fixtures for the specified league."""
 
     # Arrange
@@ -135,7 +135,7 @@ def test_get_bracket(client, db_session):
             id=11,
             league_id=5,
             season=2024,
-            round="Semi-finals",
+            round="Group Stage",
             date=datetime(2024, 5, 1, 20, 0),
             home_team_id=200,
             away_team_id=201,
@@ -151,5 +151,48 @@ def test_get_bracket(client, db_session):
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
-    assert data[0]["round"] == "Semi-finals"
+    assert data[0]["round"] == "Group Stage"
     assert data[1]["round"] == "Final"
+
+
+def test_get_bracket_with_knockout_only(client, db_session):
+    """GET /leagues/{id}/bracket returns only knockout rounds when requested."""
+
+    # Arrange
+    db_session.add(models.League(id=6, name="Puchar Niemiec", country="Germany"))
+    db_session.add(models.Team(id=300, name="Bayern Munich", country="Germany"))
+    db_session.add(models.Team(id=301, name="Borussia Dortmund", country="Germany"))
+    db_session.add(
+        models.Fixture(
+            id=20,
+            league_id=6,
+            season=2024,
+            round="Final",
+            date=datetime(2024, 6, 1, 20, 0),
+            home_team_id=300,
+            away_team_id=301,
+            status="F",
+        )
+    )
+    db_session.add(
+        models.Fixture(
+            id=21,
+            league_id=6,
+            season=2024,
+            round="Group Stage",
+            date=datetime(2024, 5, 1, 20, 0),
+            home_team_id=300,
+            away_team_id=301,
+            status="F",
+        )
+    )
+    db_session.commit()
+
+    # Act
+    response = client.get("/leagues/6/bracket?knockout_only=true")
+
+    # Assert
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["round"] == "Final"

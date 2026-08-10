@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import models, schemas
 from app.constants import DEFAULT_SEASON
+from app.constants import KNOCKOUT_ROUNDS
 from app.database import get_db
 
 # tags=[...] groups these endpoints under one heading in the Swagger UI (/docs).
@@ -88,7 +89,10 @@ def get_league_fixtures(
 
 @router.get("/leagues/{league_id}/bracket", response_model=list[schemas.BracketRound])
 def get_league_bracket(
-    league_id: int, season: int = DEFAULT_SEASON, db: Session = Depends(get_db)
+    league_id: int,
+    season: int = DEFAULT_SEASON,
+    knockout_only: bool = False,
+    db: Session = Depends(get_db),
 ):
     fixtures = query_fixtures(db, league_id, season)
 
@@ -103,5 +107,7 @@ def get_league_bracket(
 
     result = []
     for round_name, matches in rounds.items():
+        if knockout_only and round_name not in KNOCKOUT_ROUNDS:
+            continue
         result.append(schemas.BracketRound(round=round_name, fixtures=matches))
     return result

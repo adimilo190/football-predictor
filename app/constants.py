@@ -43,3 +43,15 @@ TARGET_LEAGUE_IDS: dict[int, str] = {
     **DOMESTIC_CUP_IDS,
     **EUROPEAN_COMPETITION_IDS,
 }
+
+# Knockout rounds of a cup competition. Used to filter the bracket endpoint, so
+# we only return rounds that are actually part of the knockout stage. It is a set
+# (unordered): the bracket's column order comes from the date sort, not from here.
+KNOCKOUT_ROUNDS: set[str] = {
+    "Round of 64",
+    "Round of 32",
+    "Round of 16",
+    "Quarter-finals",
+    "Semi-finals",
+    "Final",
+}

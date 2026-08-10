@@ -92,3 +92,11 @@
 * [x] Weryfikacja: 6/6 testów zielone przez cały refaktor, Ruff czysty, smoke `import app.main` → 12 tras. Zero zapytań do API-Football, bez nowych migracji.
 * **Wynik:** Backend Fazy 1 domknięty i uporządkowany (routery + testy). Gotowe pod start frontendu (Sesja 8).
 
+## Sesja 8 (2026-08-10) — Start frontendu (Vite + React + TS), CORS, filtr bracket
+* [x] **Frontend od zera:** Node.js v20.20.2 (nvm, w WSL) + npm 10.8.2; `npm create vite@latest frontend -- --template react-ts` (React 19 + Vite 8 + oxlint) + `npm install` (27 paczek). Fundament przez analogię Python→JS (node/npm/package.json/node_modules).
+* [x] **Pierwszy komponent** (napisał właściciel): `LeagueCard` (props `{name, country}` typowane, destrukturyzacja, JSX) reużyty 5× w `App`; fragment `<>` + `export default`. Dev-server `npm run dev` (:5173, HMR), render zweryfikowany.
+* [x] **CORS** (`CORSMiddleware` w `app/main.py`, origin `http://localhost:5173`, credentials): weryfikacja curlem — preflight `OPTIONS` + `GET` z dozwolonym/obcym origin. Lekcja: CORS to ochrona przeglądarki, nie autoryzacja serwera.
+* [x] **Dług spłacony — filtr `knockout_only`** w `GET /leagues/{id}/bracket`: opt-in query param (default `False`) + stała `KNOCKOUT_ROUNDS` w `constants.py`. Diagnostyka realnych rund (CL 17, FA Cup 20). Poprawka po review: default `True`→`False` (kompatybilność wsteczna + semantyka opt-in).
+* [x] **2 testy bracket:** `test_get_bracket_all_stages` (default = wszystko + dowód sortu po dacie), `test_get_bracket_with_knockout_only` (filtr). pytest **7/7**, Ruff (`app/` + `tests/`) czysty.
+* **Wynik:** Frontend wystartował (działający komponent + CORS gotowy pod fetch w Sesji 9). Backend Fazy 1 dopięty o czysty filtr drabinki knockout. 0 zapytań do API-Football.
+

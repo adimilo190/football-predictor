@@ -86,12 +86,15 @@
 ## BLOK 2 — Frontend od zera + UI Fazy 1 (tygodnie 4–6: 21 lip – 10 sie)
 
 > **Postęp (5 sie):** backend Fazy 1 domknięty dodatkową sesją porządkową — routery + testy pytest (log `sessions/session-07.md`). Numery sesji poniżej to **fazy**; kalendarzowo ruszają o jedną później (doszła sesja porządkowa). Nie przenumerowujemy — plan służy nam (ryzyko #4).
+>
+> **Postęp (10 sie):** „Start frontendu" zrobiony (kalendarzowo Sesja 8, log `sessions/session-08.md`) — Vite + React + TS, pierwszy komponent `LeagueCard`, CORS; spłacony dług `bracket` (filtr `knockout_only`). Milestone „UI tabel i drabinek działa" przesuwa się (frontend dopiero wystartował) — zgodnie z ryzykiem #4.
 
-### Sesja 7 — [ ] Start frontendu
-- [ ] Node.js w WSL (przez `nvm`), czym jest npm i `package.json`
-- [ ] `npm create vite@latest frontend` → React + TypeScript; tour po wygenerowanych plikach
-- [ ] Uruchomienie dev-servera, pierwszy własny komponent
-- [ ] **CORS** w FastAPI (`CORSMiddleware`) — żeby przeglądarka pozwoliła frontendowi gadać z backendem
+### Sesja 7 — [x] Start frontendu — ZROBIONE kalendarzowo w Sesji 8 (log `sessions/session-08.md`)
+- [x] Node.js w WSL (przez `nvm`, v20.20.2 LTS), npm 10.8.2; ekosystem JS przez analogię do Pythona
+- [x] `npm create vite@latest frontend -- --template react-ts` → React 19 + TypeScript + Vite 8 + oxlint; tour po plikach
+- [x] Uruchomienie dev-servera (`npm run dev`, :5173, HMR), pierwszy własny komponent `LeagueCard` (props + reuse 5×)
+- [x] **CORS** w FastAPI (`CORSMiddleware`, origin 5173) — zweryfikowane curlem (preflight + dozwolony/obcy origin)
+- [x] (dług z S6/7) filtr `knockout_only` w `GET /leagues/{id}/bracket` + stała `KNOCKOUT_ROUNDS` + 2 testy
 
 **Czego się uczysz:** ekosystem JS (node/npm/Vite), czym jest SPA, jak frontend rozmawia z backendem, CORS.
 
