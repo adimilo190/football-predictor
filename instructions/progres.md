@@ -100,3 +100,13 @@
 * [x] **2 testy bracket:** `test_get_bracket_all_stages` (default = wszystko + dowód sortu po dacie), `test_get_bracket_with_knockout_only` (filtr). pytest **7/7**, Ruff (`app/` + `tests/`) czysty.
 * **Wynik:** Frontend wystartował (działający komponent + CORS gotowy pod fetch w Sesji 9). Backend Fazy 1 dopięty o czysty filtr drabinki knockout. 0 zapytań do API-Football.
 
+## Sesja 9 (2026-08-17) — Interaktywny React + pierwsza tabela na żywych danych
+* [x] **`useState` + `useEffect`** (rozgrzewka `Counter`): stan = pamięć + trigger re-render; efekt wg tablicy zależności (`[]` = raz po zamontowaniu), nie co render. Ominięta pułapka `onClick={() => ...}` (funkcja, nie wywołanie).
+* [x] **`LeagueTable` z fetchem**: typy TS `Team`/`Standing` jako lustro `schemas.py` (snake_case, `string | null`, zagnieżdżony `team`); idiom async-w-`useEffect`, dwa `await`, `.map` + `key`. `GET /leagues/39/standings` → 20 wierszy; **CORS zagrał na żywo**.
+* [x] **Stany loading/error**: `try/catch/finally`, pułapka `res.ok` (`fetch` nie rzuca przy 404 → ręczny `throw` = frontendowy `raise_for_status`), generyk `useState<string | null>`.
+* [x] **Tailwind CSS v4** (setup Claude, metoda zweryfikowana WebFetch): `@tailwindcss/vite` + `@import "tailwindcss"` (NIE stara v3). Utility-first, warianty `hover:`/`odd:`, dziedziczenie `text-align`; stylowanie tabeli (właściciel).
+* [x] **Porządek**: rozbicie na `src/components/LeagueCard.tsx` + `LeagueTable.tsx` (`import`/`export default`), `App.tsx` = szkielet, usunięty `Counter`; **prettier** dodany (skrypt `npm run format`, odpowiednik `ruff format`).
+* [x] **Logo drużyn**: `<img>` + warunkowy render `{logo_url && …}` + flex; poprawka kolumn po review (9 komórek = 9 nagłówków).
+* **Jakość:** oxlint 0/0, build (tsc + vite) zielony, format czysty. Backend bez zmian (7/7 testów), 0 zapytań do API-Football.
+* **Wynik:** Działa pierwsza tabela ligowa na żywych danych (PL 2024/25), odporna na błędy i ostylowana. Do Sesji 10: routing (React Router) — nawigacja po 6 ligach, `useParams` zamiast zahardkodowanego `39`.
+

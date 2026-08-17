@@ -88,6 +88,8 @@
 > **Postęp (5 sie):** backend Fazy 1 domknięty dodatkową sesją porządkową — routery + testy pytest (log `sessions/session-07.md`). Numery sesji poniżej to **fazy**; kalendarzowo ruszają o jedną później (doszła sesja porządkowa). Nie przenumerowujemy — plan służy nam (ryzyko #4).
 >
 > **Postęp (10 sie):** „Start frontendu" zrobiony (kalendarzowo Sesja 8, log `sessions/session-08.md`) — Vite + React + TS, pierwszy komponent `LeagueCard`, CORS; spłacony dług `bracket` (filtr `knockout_only`). Milestone „UI tabel i drabinek działa" przesuwa się (frontend dopiero wystartował) — zgodnie z ryzykiem #4.
+>
+> **Postęp (17 sie):** „Podstawy React + Tailwind + pierwsza tabela" zrobione (kalendarzowo Sesja 9, log `sessions/session-09.md`) — `useState`/`useEffect`, `LeagueTable` z fetchem + typy TS, stany loading/error, Tailwind v4, rozbicie na pliki + prettier, logo drużyn. Działa tabela ligowa (PL 2024/25). Dalej: routing i nawigacja po 6 ligach.
 
 ### Sesja 7 — [x] Start frontendu — ZROBIONE kalendarzowo w Sesji 8 (log `sessions/session-08.md`)
 - [x] Node.js w WSL (przez `nvm`, v20.20.2 LTS), npm 10.8.2; ekosystem JS przez analogię do Pythona
@@ -98,10 +100,11 @@
 
 **Czego się uczysz:** ekosystem JS (node/npm/Vite), czym jest SPA, jak frontend rozmawia z backendem, CORS.
 
-### Sesja 8 — [ ] Podstawy React + Tailwind + pierwsza tabela
-- [ ] Fundamenty React: komponenty, props, `useState`, `useEffect`
-- [ ] Tailwind CSS — instalacja i filozofia utility-first
-- [ ] Komponent `LeagueTable`: fetch z `GET /leagues/{id}/standings` + typy TS dla odpowiedzi API
+### Sesja 8 — [x] Podstawy React + Tailwind + pierwsza tabela — ZROBIONE kalendarzowo w Sesji 9 (log `sessions/session-09.md`)
+- [x] Fundamenty React: komponenty, props, `useState`, `useEffect`
+- [x] Tailwind CSS — instalacja (v4, plugin `@tailwindcss/vite`) i filozofia utility-first
+- [x] Komponent `LeagueTable`: fetch z `GET /leagues/{id}/standings` + typy TS dla odpowiedzi API
+- [x] (dodatkowo) stany loading/error (`res.ok`), rozbicie na `src/components/` + prettier, logo drużyn
 
 **Czego się uczysz:** rdzeń Reacta, typowanie odpowiedzi API w TypeScript, Tailwind.
 
