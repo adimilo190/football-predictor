@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "../api/config";
 
 type Team = {
   id: number;
@@ -19,8 +20,11 @@ type Standing = {
   goals_against: number;
   form: string | null;
 };
+type LeagueTableProps = {
+  leagueId: string;
+};
 
-function LeagueTable() {
+function LeagueTable({ leagueId }: LeagueTableProps) {
   const [standings, setStandings] = useState<Standing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +32,9 @@ function LeagueTable() {
   useEffect(() => {
     async function loadStandings() {
       try {
-        const res = await fetch("http://localhost:8000/leagues/39/standings");
+        const res = await fetch(
+          `${API_BASE_URL}/leagues/${leagueId}/standings`,
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setStandings(data);
@@ -40,7 +46,7 @@ function LeagueTable() {
       }
     }
     loadStandings();
-  }, []);
+  }, [leagueId]);
 
   if (loading) {
     return <p>Loading...</p>;

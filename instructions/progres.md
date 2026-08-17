@@ -110,3 +110,12 @@
 * **Jakość:** oxlint 0/0, build (tsc + vite) zielony, format czysty. Backend bez zmian (7/7 testów), 0 zapytań do API-Football.
 * **Wynik:** Działa pierwsza tabela ligowa na żywych danych (PL 2024/25), odporna na błędy i ostylowana. Do Sesji 10: routing (React Router) — nawigacja po 6 ligach, `useParams` zamiast zahardkodowanego `39`.
 
+## Sesja 10 (2026-08-17) — Routing i nawigacja (React Router, useParams, Link, layout, env)
+* [x] **React Router v7** (`react-router-dom ^7.18.2`): `<BrowserRouter>` w `main.tsx`; teoria SPA (URL → komponent bez przeładowania, History API).
+* [x] **Strony vs komponenty**: nowy folder `src/pages/` (`HomePage`, `LeaguePage`); `src/data/leagues.ts` (6 lig, pierwszy `export` nazwany); `<Routes>`/`<Route>` w `App.tsx` (`/` → `HomePage`, `/leagues/:id` → `LeaguePage`).
+* [x] **`useParams`**: `LeaguePage` czyta `:id` (zawsze string; strażnik `if (!id)` = zawężanie typu), przekazuje `leagueId` do `LeagueTable`; fetch na template literal; **deps `[leagueId]`** (refetch przy zmianie ligi). Jeden komponent = wszystkie 6 lig (zweryfikowane na żywo: PL/La Liga/Bundesliga). Złapany błąd cudzysłowy zamiast backticków (kompilator nie łapie).
+* [x] **`<Link>` + layout**: klikalne karty (`to={` `` `/leagues/${id}` `` `}`, `key` na `Link`), wspólny `<header>` (landmark `banner`) z nagłówkiem-linkiem do `/` nad `<Routes>`; zduplikowany `<h1>` usunięty ze stron.
+* [x] **Bazowy URL API w `.env`**: `frontend/.env` + `.env.example` (`VITE_API_URL`), `src/api/config.ts` (`import.meta.env` + `??` fallback, jedno źródło prawdy); `LeagueTable` używa `API_BASE_URL`. Zaszyty `http://localhost:8000` zniknął z kodu. Lekcja: zmienne `VITE_` nie są tajne.
+* **Jakość:** `npm run build` (tsc+vite) zielony, `npm run lint` (oxlint) 0/0, `npm run format` (prettier) czysty. Backend uruchamiany tylko do weryfikacji na żywo; **0 zapytań** do API-Football.
+* **Wynik:** Nawigacja po 6 ligach działa (klikalne karty ⇄ tabela ligi, bez przeładowania), URL API skonfigurowany przez `.env`. Do Sesji 11: **TanStack Query** — porządne pobieranie danych (cache, `isLoading`/`isError`), refaktor ręcznego fetcha i wspólny klient API.
+

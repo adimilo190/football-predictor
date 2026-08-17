@@ -90,6 +90,8 @@
 > **Postęp (10 sie):** „Start frontendu" zrobiony (kalendarzowo Sesja 8, log `sessions/session-08.md`) — Vite + React + TS, pierwszy komponent `LeagueCard`, CORS; spłacony dług `bracket` (filtr `knockout_only`). Milestone „UI tabel i drabinek działa" przesuwa się (frontend dopiero wystartował) — zgodnie z ryzykiem #4.
 >
 > **Postęp (17 sie):** „Podstawy React + Tailwind + pierwsza tabela" zrobione (kalendarzowo Sesja 9, log `sessions/session-09.md`) — `useState`/`useEffect`, `LeagueTable` z fetchem + typy TS, stany loading/error, Tailwind v4, rozbicie na pliki + prettier, logo drużyn. Działa tabela ligowa (PL 2024/25). Dalej: routing i nawigacja po 6 ligach.
+>
+> **Postęp (17 sie, Sesja 10):** „Routing i nawigacja" zrobione (kalendarzowo Sesja 10, log `sessions/session-10.md`) — React Router v7, strony `Home`/`League`, `useParams` (jeden `LeagueTable` dla wszystkich 6 lig), `Link` + layout z nagłówkiem, bazowy URL API w `.env` (`import.meta.env`). Nawigacja po 6 ligach działa (klikalne karty ⇄ tabela ligi). Dalej: TanStack Query (porządne pobieranie danych).
 
 ### Sesja 7 — [x] Start frontendu — ZROBIONE kalendarzowo w Sesji 8 (log `sessions/session-08.md`)
 - [x] Node.js w WSL (przez `nvm`, v20.20.2 LTS), npm 10.8.2; ekosystem JS przez analogię do Pythona
@@ -108,9 +110,10 @@
 
 **Czego się uczysz:** rdzeń Reacta, typowanie odpowiedzi API w TypeScript, Tailwind.
 
-### Sesja 9 — [ ] Routing i nawigacja
-- [ ] React Router: strona główna, `/league/:id`, layout z nawigacją (6 lig)
-- [ ] Komponent nawigacji z logo lig
+### Sesja 9 — [x] Routing i nawigacja — ZROBIONE kalendarzowo w Sesji 10 (log `sessions/session-10.md`)
+- [x] React Router (v7): strona główna (lista 6 lig), `/leagues/:id`, layout z nagłówkiem
+- [x] Nawigacja: klikalne karty lig (`<Link>`) + nagłówek jako powrót do `/` *(logo lig — opcjonalnie później)*
+- [x] (dodatkowo) `useParams` — jeden `LeagueTable` dla wszystkich lig; bazowy URL API w `.env` (`src/api/config.ts`)
 
 **Czego się uczysz:** routing w SPA, parametry URL, kompozycja layoutu.
 

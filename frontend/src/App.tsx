@@ -1,16 +1,19 @@
-import LeagueCard from "./components/LeagueCard";
-import LeagueTable from "./components/LeagueTable";
+import { Route, Routes, Link } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import LeaguePage from "./pages/LeaguePage";
 
 function App() {
   return (
     <>
-      <h1>⚽ Football Predictor</h1>
-      <LeagueTable />
-      <LeagueCard name="Premier League" country="England" />
-      <LeagueCard name="La Liga" country="Spain" />
-      <LeagueCard name="Serie A" country="Italy" />
-      <LeagueCard name="Bundesliga" country="Germany" />
-      <LeagueCard name="Ligue 1" country="France" />
+      <header>
+        <Link to="/">
+          <h1>⚽ Football Predictor</h1>
+        </Link>
+      </header>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/leagues/:id" element={<LeaguePage />} />
+      </Routes>
     </>
   );
 }
