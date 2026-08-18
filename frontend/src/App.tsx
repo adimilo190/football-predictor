@@ -5,8 +5,8 @@ import LeaguePage from "./pages/LeaguePage";
 function App() {
   return (
     <>
-      <header>
-        <Link to="/">
+      <header className="border-b border-gray-200">
+        <Link to="/" className="inline-block transition hover:opacity-80">
           <h1>⚽ Football Predictor</h1>
         </Link>
       </header>

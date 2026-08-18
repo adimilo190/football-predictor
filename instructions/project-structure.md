@@ -1,8 +1,9 @@
 # Struktura projektu — mapa plików i folderów
 
 > Streszczenie całego projektu w jednym miejscu: co jest w każdym pliku/folderze i po co.
-> **Ten plik aktualizujemy przy każdej zmianie struktury** (nowy plik/folder = nowy wpis tutaj).
-> Stan na: Sesja 5 (2026-08-03).
+> **Ten plik aktualizujemy przy każdej zmianie struktury** (nowy plik/folder = nowy wpis tutaj) —
+> to stały punkt rytuału końca sesji.
+> Stan na: Sesja 11 (2026-08-18).
 
 ---
 
@@ -10,37 +11,86 @@
 
 | Plik / folder | Co to jest i po co |
 |---|---|
-| `app/` | **Cały kod backendu** (pakiet Pythona) — szczegóły niżej |
-| `tests/` | **Testy pytest** (`test_main.py`) — sprawdzają endpointy przez `TestClient`, bez uruchamiania serwera. `__init__.py` sprawia, że pytest dokłada katalog projektu do `sys.path` |
+| `app/` | **Kod backendu** (pakiet Pythona, FastAPI) — szczegóły niżej |
+| `frontend/` | **Kod frontendu** (React + TypeScript + Vite + Tailwind) — szczegóły niżej |
+| `tests/` | **Testy pytest** — sprawdzają API przez `TestClient` na izolowanej bazie, bez uruchamiania serwera |
 | `alembic/` + `alembic.ini` | **Migracje bazy danych** — szczegóły niżej |
 | `instructions/` | **Dokumentacja projektu** (plany, logi, decyzje) — szczegóły niżej |
-| `venv/` | Wirtualne środowisko Pythona (izolowane paczki projektu). NIE w gicie. Używamy `venv/bin/python`, `venv/bin/pip` |
-| `.env` | **SEKRETY**: hasło do bazy (`DATABASE_URL`), klucz API (`API_FOOTBALL_KEY`). NIE w gicie — nigdy nie commitować! |
-| `.env.example` | Wzór pliku `.env` bez prawdziwych wartości — jest w gicie, żeby każdy wiedział, jakie zmienne trzeba ustawić |
-| `.gitignore` | Lista rzeczy, których git ma NIE śledzić (venv, `__pycache__`, `.env`, node_modules) |
-| `requirements.txt` | Zamrożone wersje wszystkich paczek Pythona — `pip install -r requirements.txt` odtwarza środowisko. Aktualizowany po każdej instalacji (`pip freeze`) |
-| `CLAUDE.md` | Zasady współpracy z Claude: tryb nauki, rytm pracy (jeden krok naraz), rytuał końca sesji, szczegóły środowiska (WSL, venv, PostgreSQL) |
-| `.claude/` | Ustawienia Claude Code dla tego projektu (`settings.local.json` — uprawnienia narzędzi) |
+| `venv/` | Wirtualne środowisko Pythona (izolowane paczki). NIE w gicie. Używamy `venv/bin/python`, `venv/bin/pip` |
+| `.env` | **SEKRETY**: `DATABASE_URL`, `API_FOOTBALL_KEY`. NIE w gicie — nigdy nie commitować! |
+| `.env.example` | Wzór `.env` bez prawdziwych wartości — jest w gicie, żeby było wiadomo, jakie zmienne ustawić |
+| `.gitignore` | Czego git ma NIE śledzić (venv, `__pycache__`, `.env`, `node_modules`, `dist`) |
+| `requirements.txt` | Zamrożone wersje paczek Pythona — `pip install -r requirements.txt` odtwarza środowisko (`pip freeze` po każdej instalacji) |
+| `CLAUDE.md` | Zasady współpracy: tryb nauki, rytm (jeden krok naraz), rytuał końca sesji, środowisko (WSL, venv, PostgreSQL) |
+| `.claude/` | Ustawienia Claude Code dla projektu (`settings.local.json` — uprawnienia narzędzi) |
 | `.git/` | Wewnętrzna baza gita (historia commitów). Nie ruszamy ręcznie |
-| `__pycache__/`, `.ruff_cache/`, `.pytest_cache/` | Automatyczne cache Pythona / Ruffa / pytest — można bezpiecznie skasować, odtworzą się same. NIE w gicie |
+| `__pycache__/`, `.ruff_cache/`, `.pytest_cache/` | Automatyczne cache Pythona / Ruffa / pytest — można skasować, odtworzą się. NIE w gicie |
 
 ---
 
 ## `app/` — kod backendu (FastAPI)
 
-Pakiet Pythona (ma `__init__.py`). Warstwy od spodu do góry:
+Pakiet Pythona (`__init__.py`). Warstwy od spodu do góry:
 
 | Plik | Co robi |
 |---|---|
-| `__init__.py` | Pusty plik, który mówi Pythonowi „ten folder to pakiet" — dzięki niemu działają importy `from app...` |
-| `config.py` | **Jedno źródło konfiguracji.** Klasa `Settings` (pydantic-settings) wczytuje `.env`, waliduje i głośno krzyczy na starcie, jeśli czegoś brakuje. Reszta kodu robi `from app.config import settings` |
-| `database.py` | **Połączenie z PostgreSQL**: `engine` (fizyczne połączenie), `SessionLocal` (fabryka sesji — jedna sesja = jedna „rozmowa" z bazą), `Base` (klasa bazowa, z której dziedziczą modele) |
-| `models.py` | **Modele SQLAlchemy = tabele w bazie**: `League` (rozgrywki), `Team` (drużyna — celowo bez przypisania do ligi, bo gra w wielu rozgrywkach), `Standing` (wiersz tabeli ligowej: liga + drużyna + sezon + statystyki; klucze obce i blokada duplikatów) |
-| `schemas.py` | **Schematy Pydantic = kontrakt API**: co endpointy zwracają na zewnątrz — `LeagueResponse`, `TeamResponse`, `StandingResponse` (ten ostatni z zagnieżdżoną drużyną). Osobna warstwa od `models.py`: baza może mieć więcej pól niż pokazujemy światu |
-| `constants.py` | **Stałe biznesowe**: `TARGET_LEAGUE_IDS` — ID 13 śledzonych rozgrywek (6 lig + 6 pucharów + LM), rozbite na grupy; `DEFAULT_SEASON = 2024` |
-| `main.py` | **Serce API**: tworzy aplikację FastAPI i definiuje endpointy — `GET /` (test), `POST /import-leagues` i `POST /import-standings` (ETL z API-Football), `GET /leagues` (lista lig), `GET /leagues/{id}/standings` (tabela ligowa, sort po `rank`, `joinedload`). Dokumentacja interaktywna: `/docs` (Swagger UI) |
+| `__init__.py` | Pusty plik — mówi Pythonowi „ten folder to pakiet"; dzięki temu działają importy `from app...` |
+| `config.py` | **Jedno źródło konfiguracji.** Klasa `Settings` (pydantic-settings) wczytuje `.env`, waliduje, krzyczy na starcie, jeśli czegoś brak. Reszta kodu: `from app.config import settings` |
+| `database.py` | **Połączenie z PostgreSQL**: `engine`, `SessionLocal` (fabryka sesji), `Base` (klasa bazowa modeli) + zależność `get_db` (jedna sesja na request; tu, by uniknąć cyklu importów) |
+| `models.py` | **Modele SQLAlchemy = tabele**: `League` (rozgrywki), `Team` (drużyna — bez ligi, bo gra w wielu), `Standing` (wiersz tabeli: liga+drużyna+sezon+statystyki), `Fixture` (mecz: **dwa** FK do `teams` — home/away, wynik, data, runda, status) |
+| `schemas.py` | **Schematy Pydantic = kontrakt API** (co wychodzi na zewnątrz): `LeagueResponse`, `TeamResponse`, `StandingResponse` (zagnieżdżona drużyna), `FixtureResponse` (dwie drużyny, gole nullable), `BracketRound` (runda + lista meczów; budowany ręcznie) |
+| `constants.py` | **Stałe biznesowe**: `TARGET_LEAGUE_IDS` (13 rozgrywek = `DOMESTIC_LEAGUE_IDS` + `DOMESTIC_CUP_IDS` + `EUROPEAN_COMPETITION_IDS`), `DEFAULT_SEASON = 2024`, `KNOCKOUT_ROUNDS` (nazwy rund pucharowych dla filtra `knockout_only`) |
+| `main.py` | **Cienki punkt wejścia** (~30 linii): tworzy `FastAPI`, konfiguruje **CORS** (origin `:5173`), rejestruje routery. Endpointy żyją w `routers/`. Dokumentacja: `/docs` (Swagger UI) |
+| `routers/` | **Endpointy podzielone na moduły** — szczegóły niżej |
 
-**Przepływ danych:** `.env` → `config.py` → `database.py` → `models.py` → (`schemas.py` +) `main.py`.
+**Przepływ danych:** `.env` → `config.py` → `database.py` → `models.py` → (`schemas.py` +) `routers/` ← `main.py`.
+
+### `app/routers/` — endpointy w modułach
+
+| Plik | Co robi |
+|---|---|
+| `__init__.py` | Robi z `routers/` pakiet |
+| `competitions.py` | **Odczyty (READ)**: `GET /leagues`, `GET /leagues/{id}/standings` (sort po `rank`, `joinedload` przeciw N+1), `GET /leagues/{id}/fixtures` (płaska lista), `GET /leagues/{id}/bracket` (grupowanie rundami + filtr `knockout_only`). Helper `query_fixtures` (DRY) |
+| `imports.py` | **Zapisy / ETL (WRITE)**: `POST /import-leagues`, `POST /import-standings`, `POST /import-fixtures` + funkcje `fetch_*` (Extract z API-Football) i `upsert_*` (Transform+Load). Obsługa limitów i błędów HTTP |
+
+---
+
+## `frontend/` — kod frontendu (React + TypeScript + Vite + Tailwind)
+
+Aplikacja SPA (single-page). Uruchomienie: `npm run dev` (w WSL, Node przez `nvm`). Node/npm i `node_modules` NIE w gicie.
+
+### `frontend/` — pliki konfiguracyjne (root)
+
+| Plik / folder | Co robi |
+|---|---|
+| `index.html` | Szkielet strony: `<div id="root">` + `<script src="/src/main.tsx">`. Punkt startowy, w który React „wstrzykuje" aplikację |
+| `package.json` | Zależności JS (React 19, `react-router-dom`, `@tanstack/react-query`, `tailwindcss`, Vite, oxlint, prettier, TypeScript) + skrypty `dev`/`build`/`lint`/`format` |
+| `package-lock.json` | Zamrożone dokładne wersje wszystkich paczek (odpowiednik `requirements.txt` dla JS) |
+| `vite.config.ts` | Konfiguracja Vite: pluginy React + Tailwind |
+| `tsconfig*.json` | Konfiguracja TypeScriptu (`tsconfig.json` spina, `.app`/`.node` — osobno kod aplikacji i narzędzi) |
+| `.env` | Konfiguracja per-środowisko: `VITE_API_URL` (adres backendu). NIE tajne (ląduje w bundlu), ale NIE w gicie |
+| `.env.example` | Wzór `.env` frontendu — jest w gicie |
+| `public/` | Pliki serwowane statycznie „jak są" (np. favicon) |
+| `README.md` | Domyślne readme z szablonu Vite |
+
+### `frontend/src/` — kod aplikacji
+
+| Plik / folder | Co robi |
+|---|---|
+| `main.tsx` | **Punkt wejścia Reacta**: montuje `<App/>` w `#root`, owinięty w `BrowserRouter` (routing) i `QueryClientProvider` (cache TanStack Query); importuje `index.css` |
+| `App.tsx` | **Layout + routing**: wspólny `<header>` (klikalny tytuł → `/`) nad `<Routes>`; trasy `/` → `HomePage`, `/leagues/:id` → `LeaguePage` |
+| `index.css` | Globalne style: `@import "tailwindcss"` (utility + preflight) + zmienne motywu i style `#root`/`h1` |
+| `App.css` | ⚠️ Pozostałość po szablonie Vite — **nieużywana** (nigdzie nieimportowana). Do sprzątnięcia |
+| `api/config.ts` | `API_BASE_URL` z `VITE_API_URL` (`import.meta.env` + fallback). Jedno źródło adresu backendu |
+| `api/standings.ts` | **Warstwa API**: typy `Team`/`Standing` (lustro `schemas.py`) + `getStandings(leagueId)` (`fetch` + `throw` przy `!res.ok` + `res.json()`). Wołana jako `queryFn` |
+| `components/LeagueCard.tsx` | Karta ligi (props `name`/`country`, styl Tailwind: ramka, cień, hover) |
+| `components/LeagueTable.tsx` | Tabela ligowa: `useQuery(["standings", leagueId], getStandings)` → `data`/`isLoading`/`isError`, render `<table>` |
+| `pages/HomePage.tsx` | Strona główna: siatka `grid` responsywnych kart lig (`LEAGUES`), każda w `<Link>` do `/leagues/:id` |
+| `pages/LeaguePage.tsx` | Strona ligi: czyta `:id` przez `useParams` (strażnik na brak), przekazuje `leagueId` do `LeagueTable` |
+| `data/leagues.ts` | Statyczne dane nawigacji: typ `League` + `LEAGUES` (6 lig z `id` z API-Football) |
+| `assets/` | Grafiki z szablonu Vite (`react.svg`, `vite.svg`, `hero.png`) — obecnie nieużywane |
+
+**Przepływ:** `main.tsx` → `App.tsx` (routing) → `pages/` → `components/` → `api/` → backend.
 
 ---
 
@@ -48,27 +98,27 @@ Pakiet Pythona (ma `__init__.py`). Warstwy od spodu do góry:
 
 | Plik | Co robi |
 |---|---|
-| `__init__.py` | Robi z `tests/` pakiet — efekt uboczny: pytest dokłada katalog projektu do `sys.path`, więc działa `from app.main import app` |
-| `test_main.py` | Testy endpointów przez `TestClient` (woła API bez uruchamiania serwera): `/`, `/leagues`, `/leagues/{id}/standings` (m.in. `rank==1` i zagnieżdżona drużyna), błędne id → 404 |
+| `__init__.py` | Robi z `tests/` pakiet (pytest dokłada katalog projektu do `sys.path`) |
+| `conftest.py` | **Infrastruktura testowa**: izolowana baza **SQLite in-memory** (`StaticPool`), podmiana `get_db` przez `app.dependency_overrides`, autouse fixture czyszcząca bazę per test, fixtures `client`/`db_session` |
+| `test_main.py` | **7 testów** endpointów (Arrange–Act–Assert, własny seed): `/`, `/leagues`, `/standings`, `/fixtures`, `/bracket` (wszystkie rundy + dowód sortu, oraz filtr `knockout_only`), błędne id → 404 |
 
-**Uruchomienie:** `venv/bin/pytest -v` (w WSL). Na razie testy korzystają z prawdziwej bazy deweloperskiej — osobna baza testowa (override `get_db`) to zaplanowany refaktor.
+**Uruchomienie:** `venv/bin/pytest -v` (w WSL). Testy nie ruszają prawdziwej bazy ani API-Football.
 
 ---
 
 ## `alembic/` — migracje bazy danych
 
-Migracja = wersjonowana zmiana schematu bazy (jak commit w gicie, ale dla struktury tabel).
-Schematem bazy zarządza WYŁĄCZNIE Alembic (żadnych `create_all` / ręcznych DROP-ów).
+Migracja = wersjonowana zmiana schematu (jak commit, ale dla struktury tabel). Schematem zarządza WYŁĄCZNIE Alembic (żadnych `create_all` / ręcznych DROP-ów).
 
 | Plik / folder | Co robi |
 |---|---|
-| `alembic.ini` (w katalogu głównym) | Konfiguracja Alembica. Adres bazy jest tu placeholderem — prawdziwy wstrzykuje `env.py` z `.env` (żeby hasło nie trafiło do gita) |
-| `env.py` | Skrypt startowy każdej komendy Alembica: podłącza URL bazy z `settings` i `Base.metadata` z naszych modeli (dzięki temu `--autogenerate` widzi różnice modele↔baza) |
-| `versions/` | **Pliki migracji** — każdy to jedna zmiana schematu z funkcjami `upgrade()` (wykonaj) i `downgrade()` (cofnij), połączone w łańcuch przez `down_revision`. Obecnie: 1) `create leagues table`, 2) `add teams and standings tables` |
-| `script.py.mako` | Szablon, z którego Alembic generuje nowe pliki migracji |
-| `README` | Domyślna notka wygenerowana przez Alembica |
+| `alembic.ini` (w katalogu głównym) | Konfiguracja Alembica; adres bazy to placeholder — prawdziwy wstrzykuje `env.py` z `.env` |
+| `env.py` | Skrypt startowy: URL bazy z `settings` + `Base.metadata` modeli (żeby `--autogenerate` widział różnice modele↔baza) |
+| `versions/` | **Pliki migracji** (łańcuch przez `down_revision`): 1) `create leagues table`, 2) `add teams and standings tables`, 3) `create fixtures table` |
+| `script.py.mako` | Szablon nowych migracji |
+| `README` | Domyślna notka Alembica |
 
-**Codzienny workflow:** zmień `models.py` → `alembic revision --autogenerate -m "opis"` → **przeczytaj wygenerowany plik** → `alembic upgrade head`.
+**Workflow:** zmień `models.py` → `alembic revision --autogenerate -m "opis"` → **przeczytaj plik** → `alembic upgrade head`.
 
 ---
 
@@ -76,12 +126,12 @@ Schematem bazy zarządza WYŁĄCZNIE Alembic (żadnych `create_all` / ręcznych 
 
 | Plik / folder | Co zawiera |
 |---|---|
-| `project-assumptions.md` | **CO budujemy**: cel (portfolio do CV) i 5 faz projektu (tabele/drabinki → ulubione drużyny → predictor → symulator → ML) |
-| `ROADMAP.md` | **JAK i KIEDY**: plan 24 sesji do 30 września, kamienie milowe, statusy `[x]/[~]/[ ]` + sekcja **Ryzyka** (m.in. zweryfikowane limity API-Football: darmowy plan = tylko sezony 2022–2024, 100 zapytań/dzień) |
-| `tools.md` | **CZYM budujemy**: opis stacku (FastAPI, PostgreSQL, React...) i notatki środowiskowe |
-| `progres.md` | Skrócona lista wszystkiego, co dotąd zrobiono (sekcja per sesja) |
-| `project-structure.md` | Ten plik — mapa projektu |
-| `sessions/` | **Logi sesji** (`session-NN.md`): co zrobiono, decyzje i dlaczego, czego się nauczyliśmy, TODO na następną sesję. Najlepsze miejsce do powtórek i przypomnienia kontekstu |
+| `project-assumptions.md` | **CO budujemy**: cel (portfolio/CV) i 5 faz (tabele/drabinki → ulubione → predictor → symulator → ML) |
+| `ROADMAP.md` | **JAK i KIEDY**: plan sesji do 30 września, kamienie milowe, statusy, sekcja **Ryzyka** (limity API) i **Wizja docelowego UX** (przyszła nawigacja) |
+| `tools.md` | **CZYM budujemy**: opis stacku i notatki środowiskowe |
+| `progres.md` | Skrócona lista wszystkiego, co zrobiono (sekcja per sesja) |
+| `project-structure.md` | Ten plik — mapa projektu (aktualizowana co sesję) |
+| `sessions/` | **Logi sesji** (`session-01`…`session-11`): co zrobiono, decyzje, lekcje, TODO, praca domowa |
 
 ---
 
@@ -92,14 +142,16 @@ Nie jest plikiem w repo, ale to część projektu:
 | Tabela | Co trzyma |
 |---|---|
 | `leagues` | 13 śledzonych rozgrywek (id z API-Football, nazwa, kraj, logo) |
-| `teams` | Drużyny — 114 (wypełnione importem standings w Sesji 4) |
-| `standings` | Wiersze tabel ligowych: liga + drużyna + sezon + statystyki — 114 (sezon 2024) |
+| `teams` | Drużyny — ~1267 (ligowe + pucharowe, po imporcie fixtures w Sesji 6) |
+| `standings` | Wiersze tabel ligowych: liga+drużyna+sezon+statystyki — 114 (6 lig, sezon 2024) |
+| `fixtures` | Mecze (głównie pucharowe + Liga Mistrzów) — 1733 (sezon 2024) |
 | `alembic_version` | „Zakładka" Alembica — ID aktualnie wykonanej migracji |
 
 ---
 
 ## Co dojdzie później (wg ROADMAP)
 
-- `frontend/` — React + TypeScript + Vite + Tailwind (od Sesji 7)
-- `app/routers/` — podział endpointów na moduły, gdy ich przybędzie (planowane na Sesję 6)
-- `app/prediction/` — model Poissona (Sesja 16)
+- `app/prediction/` — model Poissona, niezależny od API (Sesja 16)
+- **Przebudowa nawigacji** wg „Wizji docelowego UX": rozwijana lista krajów + puchary europejskie, selektor sezonu (Faza 1 szlify / Faza 2)
+- Doimport **Ligi Europy** i **Ligi Konferencji** (obecnie w bazie tylko Liga Mistrzów)
+- `frontend/src/api/` — kolejne funkcje pobierające (`getBracket`, `getFixtures`) obok `getStandings`

@@ -92,6 +92,8 @@
 > **Postęp (17 sie):** „Podstawy React + Tailwind + pierwsza tabela" zrobione (kalendarzowo Sesja 9, log `sessions/session-09.md`) — `useState`/`useEffect`, `LeagueTable` z fetchem + typy TS, stany loading/error, Tailwind v4, rozbicie na pliki + prettier, logo drużyn. Działa tabela ligowa (PL 2024/25). Dalej: routing i nawigacja po 6 ligach.
 >
 > **Postęp (17 sie, Sesja 10):** „Routing i nawigacja" zrobione (kalendarzowo Sesja 10, log `sessions/session-10.md`) — React Router v7, strony `Home`/`League`, `useParams` (jeden `LeagueTable` dla wszystkich 6 lig), `Link` + layout z nagłówkiem, bazowy URL API w `.env` (`import.meta.env`). Nawigacja po 6 ligach działa (klikalne karty ⇄ tabela ligi). Dalej: TanStack Query (porządne pobieranie danych).
+>
+> **Postęp (18 sie, Sesja 11):** „Porządne pobieranie danych" zrobione (kalendarzowo Sesja 11, log `sessions/session-11.md`) — TanStack Query (`QueryClientProvider`, `useQuery`: cache/`isLoading`/`isError`), warstwa API `src/api/standings.ts` (`getStandings` + typy), refaktor `LeagueTable` (ręczny `useState`+`useEffect` → jeden `useQuery`, ~20 linii mniej). Plus kosmetyka: karty lig (siatka responsywna + hover) i nagłówek. Zanotowana nowa wizja UX (nawigacja przez kraje + selektor roku) — sekcja „Wizja docelowego UX". Dalej: drabinki pucharowe (UI).
 
 ### Sesja 7 — [x] Start frontendu — ZROBIONE kalendarzowo w Sesji 8 (log `sessions/session-08.md`)
 - [x] Node.js w WSL (przez `nvm`, v20.20.2 LTS), npm 10.8.2; ekosystem JS przez analogię do Pythona
@@ -117,10 +119,11 @@
 
 **Czego się uczysz:** routing w SPA, parametry URL, kompozycja layoutu.
 
-### Sesja 10 — [ ] Porządne pobieranie danych
-- [ ] **TanStack Query**: cache, stany `isLoading`/`isError`, odświeżanie w tle
-- [ ] Refaktor dotychczasowych fetchy
-- [ ] Wspólny klient API (`frontend/src/api/`)
+### Sesja 10 — [x] Porządne pobieranie danych — ZROBIONE kalendarzowo w Sesji 11 (log `sessions/session-11.md`)
+- [x] **TanStack Query**: `QueryClientProvider` + `useQuery` (cache, `isLoading`/`isError`, refetch w tle)
+- [x] Refaktor `LeagueTable`: ręczny `useState`+`useEffect`+`try/catch` → jeden `useQuery`
+- [x] Wspólny klient API (`frontend/src/api/standings.ts` — `getStandings` + typy `Team`/`Standing`)
+- [x] (dodatkowo) kosmetyka Fazy 1: karty lig (siatka `grid` responsywna + `hover`/cień) i nagłówek (`border-b`, hover)
 
 **Czego się uczysz:** profesjonalne wzorce data-fetchingu (to samo robi się w firmach).
 
@@ -222,6 +225,32 @@
 - Docker + docker-compose (backend + frontend + Postgres jedną komendą)
 - Deploy na darmowym hostingu (Railway/Render + Vercel) — link w CV robi robotę
 - Głębsza analityka ML (xG, kalibracja prawdopodobieństw)
+
+---
+
+## Wizja docelowego UX (pomysły właściciela — do rozplanowania w sesjach)
+
+> Zanotowane w Sesji 11 (2026-08-18). Docelowy kształt nawigacji i funkcji; realizacja
+> rozłożona na kolejne sesje. Zastępuje obecną „płaską" listę 6 lig na HomePage.
+
+**HomePage — nawigacja przez kraje (rozwijana lista):**
+- Lista **krajów** (Anglia, Hiszpania, Włochy, Niemcy, Francja, Portugalia), a obok nich —
+  na tym samym poziomie — **puchary europejskie** jako osobne pozycje: Liga Mistrzów,
+  Liga Europy, Liga Konferencji (są ponadnarodowe, więc nie „siedzą" pod żadnym krajem).
+- Kliknięcie w kraj **rozwija** (accordion) rozgrywki należące do niego: **liga** + **puchar krajowy**.
+- Kliknięcie w konkretną rozgrywkę → przejście do jej **tabeli** (liga) lub **drabinki** (puchar).
+- Osobna **zakładka z predyktorami** na HomePage — *dalszy etap* (dopiero po zbudowaniu modelu, Faza 3+).
+
+**Strona rozgrywek — wybór sezonu:**
+- Na widoku tabeli/drabinki **selektor roku** z dostępnych sezonów, by przeglądać różne edycje.
+
+**⚠️ Implikacje do rozważenia przy planowaniu (nie blokują, ale trzeba je ogarnąć):**
+- *Wybór roku* wymaga danych wielosezonowych. API-Football (Free) daje **2022/23–2024/25** —
+  import kolejnych sezonów = dodatkowe zapytania (limit 100/dobę) + wpisy w bazie. Do zaplanowania.
+- *Puchary europejskie:* obecnie w bazie jest tylko **Liga Mistrzów**; **Liga Europy** i
+  **Liga Konferencji** to nowe rozgrywki do doimportowania (`TARGET_LEAGUE_IDS` + `POST /import-fixtures`).
+- *Accordion + selektor roku* to nowe komponenty UI — naturalnie wpasują się w Blok 2 (szlify Fazy 1)
+  i Fazę 2; przy najbliższym rytuale końca sesji zmapujemy je na konkretne sesje.
 
 ---
 
