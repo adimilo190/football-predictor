@@ -233,7 +233,11 @@ def upsert_team(db: Session, team_info: dict) -> bool:
 
 
 def upsert_fixtures(
-    db: Session, league_id: int, season: int, fixtures: list[dict]
+    db: Session,
+    league_id: int,
+    season: int,
+    fixtures: list[dict],
+    seen_team_ids: set[int],
 ) -> dict[str, int]:
     """Save raw fixtures into teams/fixtures (the Transform + Load steps).
 
@@ -241,6 +245,13 @@ def upsert_fixtures(
     Both teams of every match are upserted first (cups include sides from
     lower leagues that our standings import never saw), then the fixture
     itself. No db.commit() here — the caller decides when to commit.
+
+    seen_team_ids is shared across the WHOLE import (passed in by the caller):
+    a club can play in several competitions in one run — a side knocked out of
+    one European cup drops into a lower one. With autoflush=False a team added
+    but not yet committed stays invisible to the next query, so a per-competition
+    guard would add it twice and duplicate its primary key. One shared set makes
+    every team id handled exactly once across all competitions.
     """
     league = db.query(models.League).filter(models.League.id == league_id).first()
     if league is None:
@@ -250,12 +261,6 @@ def upsert_fixtures(
         )
 
     stats = {"teams_added": 0, "fixtures_added": 0, "fixtures_updated": 0}
-
-    # A cup team plays several rounds, so it recurs across fixtures. With
-    # autoflush=False a freshly added team stays invisible to the next query
-    # until commit — upserting it twice would duplicate its primary key. So
-    # handle each team id only once per import.
-    seen_team_ids: set[int] = set()
 
     for fx in fixtures:
         home_team = fx["teams"]["home"]
@@ -392,11 +397,19 @@ async def import_standings(season: int = DEFAULT_SEASON, db: Session = Depends(g
 async def import_fixtures(season: int = DEFAULT_SEASON, db: Session = Depends(get_db)):
     cups_report = {}
     totals = {"teams_added": 0, "fixtures_added": 0, "fixtures_updated": 0}
-    competitions = {**DOMESTIC_CUP_IDS, **EUROPEAN_COMPETITION_IDS}  # 6 cups + UCL
+    competitions = {
+        **DOMESTIC_CUP_IDS,
+        **EUROPEAN_COMPETITION_IDS,
+    }  # 6 cups + 3 European
+    # One shared set for the whole import: a club can appear in several
+    # competitions (a team knocked out of one European cup drops into a lower
+    # one), and with autoflush=False a pending team is invisible to the next
+    # query — so a per-competition guard would insert it twice (duplicate PK).
+    seen_team_ids: set[int] = set()
     async with httpx.AsyncClient() as client:
         for league_id, name in competitions.items():
             fixtures = await fetch_fixtures(client, league_id, season)
-            stats = upsert_fixtures(db, league_id, season, fixtures)
+            stats = upsert_fixtures(db, league_id, season, fixtures, seen_team_ids)
             cups_report[name] = stats
             for key in totals:
                 totals[key] += stats[key]

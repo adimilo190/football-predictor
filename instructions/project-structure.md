@@ -3,7 +3,7 @@
 > Streszczenie całego projektu w jednym miejscu: co jest w każdym pliku/folderze i po co.
 > **Ten plik aktualizujemy przy każdej zmianie struktury** (nowy plik/folder = nowy wpis tutaj) —
 > to stały punkt rytuału końca sesji.
-> Stan na: Sesja 11 (2026-08-18).
+> Stan na: Sesja 12 (2026-08-19).
 
 ---
 
@@ -39,7 +39,7 @@ Pakiet Pythona (`__init__.py`). Warstwy od spodu do góry:
 | `database.py` | **Połączenie z PostgreSQL**: `engine`, `SessionLocal` (fabryka sesji), `Base` (klasa bazowa modeli) + zależność `get_db` (jedna sesja na request; tu, by uniknąć cyklu importów) |
 | `models.py` | **Modele SQLAlchemy = tabele**: `League` (rozgrywki), `Team` (drużyna — bez ligi, bo gra w wielu), `Standing` (wiersz tabeli: liga+drużyna+sezon+statystyki), `Fixture` (mecz: **dwa** FK do `teams` — home/away, wynik, data, runda, status) |
 | `schemas.py` | **Schematy Pydantic = kontrakt API** (co wychodzi na zewnątrz): `LeagueResponse`, `TeamResponse`, `StandingResponse` (zagnieżdżona drużyna), `FixtureResponse` (dwie drużyny, gole nullable), `BracketRound` (runda + lista meczów; budowany ręcznie) |
-| `constants.py` | **Stałe biznesowe**: `TARGET_LEAGUE_IDS` (13 rozgrywek = `DOMESTIC_LEAGUE_IDS` + `DOMESTIC_CUP_IDS` + `EUROPEAN_COMPETITION_IDS`), `DEFAULT_SEASON = 2024`, `KNOCKOUT_ROUNDS` (nazwy rund pucharowych dla filtra `knockout_only`) |
+| `constants.py` | **Stałe biznesowe**: `TARGET_LEAGUE_IDS` (**15** rozgrywek = `DOMESTIC_LEAGUE_IDS` + `DOMESTIC_CUP_IDS` + `EUROPEAN_COMPETITION_IDS` z LM/LE/Konf), `DEFAULT_SEASON = 2024`, `KNOCKOUT_ROUNDS` (nazwy rund pucharowych dla filtra `knockout_only`) |
 | `main.py` | **Cienki punkt wejścia** (~30 linii): tworzy `FastAPI`, konfiguruje **CORS** (origin `:5173`), rejestruje routery. Endpointy żyją w `routers/`. Dokumentacja: `/docs` (Swagger UI) |
 | `routers/` | **Endpointy podzielone na moduły** — szczegóły niżej |
 
@@ -78,16 +78,19 @@ Aplikacja SPA (single-page). Uruchomienie: `npm run dev` (w WSL, Node przez `nvm
 | Plik / folder | Co robi |
 |---|---|
 | `main.tsx` | **Punkt wejścia Reacta**: montuje `<App/>` w `#root`, owinięty w `BrowserRouter` (routing) i `QueryClientProvider` (cache TanStack Query); importuje `index.css` |
-| `App.tsx` | **Layout + routing**: wspólny `<header>` (klikalny tytuł → `/`) nad `<Routes>`; trasy `/` → `HomePage`, `/leagues/:id` → `LeaguePage` |
+| `App.tsx` | **Layout + routing**: wspólny `<header>` (klikalny tytuł → `/`) nad `<Routes>`; trasy `/` → `HomePage`, `/leagues/:id` → `LeaguePage` (tabela), `/bracket/:id` → `BracketPage` (drabinka) |
 | `index.css` | Globalne style: `@import "tailwindcss"` (utility + preflight) + zmienne motywu i style `#root`/`h1` |
 | `App.css` | ⚠️ Pozostałość po szablonie Vite — **nieużywana** (nigdzie nieimportowana). Do sprzątnięcia |
 | `api/config.ts` | `API_BASE_URL` z `VITE_API_URL` (`import.meta.env` + fallback). Jedno źródło adresu backendu |
-| `api/standings.ts` | **Warstwa API**: typy `Team`/`Standing` (lustro `schemas.py`) + `getStandings(leagueId)` (`fetch` + `throw` przy `!res.ok` + `res.json()`). Wołana jako `queryFn` |
-| `components/LeagueCard.tsx` | Karta ligi (props `name`/`country`, styl Tailwind: ramka, cień, hover) |
+| `api/standings.ts` | **Warstwa API (tabele)**: typy `Team`/`Standing` + `getStandings(leagueId)` (`fetch` + `throw` przy `!res.ok`). Wołana jako `queryFn` |
+| `api/bracket.ts` | **Warstwa API (drabinki)**: typy `Fixture`/`BracketRound` + `getBracket(leagueId, knockoutOnly)`; oraz `Matchup` + `groupIntoMatchups` (grupowanie dwumeczów w pary pod drzewko) |
 | `components/LeagueTable.tsx` | Tabela ligowa: `useQuery(["standings", leagueId], getStandings)` → `data`/`isLoading`/`isError`, render `<table>` |
-| `pages/HomePage.tsx` | Strona główna: siatka `grid` responsywnych kart lig (`LEAGUES`), każda w `<Link>` do `/leagues/:id` |
-| `pages/LeaguePage.tsx` | Strona ligi: czyta `:id` przez `useParams` (strażnik na brak), przekazuje `leagueId` do `LeagueTable` |
-| `data/leagues.ts` | Statyczne dane nawigacji: typ `League` + `LEAGUES` (6 lig z `id` z API-Football) |
+| `components/Bracket.tsx` | Drabinka: `useQuery(["bracket", leagueId], getBracket)` + **drzewko turniejowe** (kolumny rund `flex`+`items-stretch`+`justify-around`, `overflow-x-auto`); grupuje mecze przez `groupIntoMatchups`, renderuje `MatchupCard` |
+| `components/MatchupCard.tsx` | Karta pary: dwie drużyny (herb + nazwa) + wyniki legów w pudełkach; dla dwumeczu nagłówki `1/2/Σ` i wynik zsumowany (agregat) |
+| `pages/HomePage.tsx` | Strona główna: **accordion** przez `<details>` — 6 krajów (`COUNTRIES`: liga→`/leagues/:id`, puchar→`/bracket/:id`) + „European Competitions" (→`/bracket/:id`) |
+| `pages/LeaguePage.tsx` | Strona ligi: czyta `:id` przez `useParams` (strażnik na brak), przekazuje `leagueId` do `LeagueTable` (tabela) |
+| `pages/BracketPage.tsx` | Strona rozgrywki pucharowej: czyta `:id` przez `useParams` (strażnik), przekazuje `leagueId` do `Bracket` (drabinka) |
+| `data/leagues.ts` | Model nawigacji: typy `Competition`/`Country` + `COUNTRIES` (6 krajów: liga+puchar) i `EUROPEAN_COMPETITIONS` (LM/LE/Konf) — `id` z API-Football |
 | `assets/` | Grafiki z szablonu Vite (`react.svg`, `vite.svg`, `hero.png`) — obecnie nieużywane |
 
 **Przepływ:** `main.tsx` → `App.tsx` (routing) → `pages/` → `components/` → `api/` → backend.
@@ -141,10 +144,10 @@ Nie jest plikiem w repo, ale to część projektu:
 
 | Tabela | Co trzyma |
 |---|---|
-| `leagues` | 13 śledzonych rozgrywek (id z API-Football, nazwa, kraj, logo) |
-| `teams` | Drużyny — ~1267 (ligowe + pucharowe, po imporcie fixtures w Sesji 6) |
+| `leagues` | **15** śledzonych rozgrywek (6 lig + 6 pucharów krajowych + LM/LE/Konf; id z API-Football, nazwa, kraj, logo) |
+| `teams` | Drużyny — ~1404 (ligowe + pucharowe/europejskie; +137 z importu LE/Konf w Sesji 12) |
 | `standings` | Wiersze tabel ligowych: liga+drużyna+sezon+statystyki — 114 (6 lig, sezon 2024) |
-| `fixtures` | Mecze (głównie pucharowe + Liga Mistrzów) — 1733 (sezon 2024) |
+| `fixtures` | Mecze (puchary krajowe + LM/LE/Konf) — **2411** (sezon 2024; +678 z LE/Konf w Sesji 12) |
 | `alembic_version` | „Zakładka" Alembica — ID aktualnie wykonanej migracji |
 
 ---
@@ -152,6 +155,6 @@ Nie jest plikiem w repo, ale to część projektu:
 ## Co dojdzie później (wg ROADMAP)
 
 - `app/prediction/` — model Poissona, niezależny od API (Sesja 16)
-- **Przebudowa nawigacji** wg „Wizji docelowego UX": rozwijana lista krajów + puchary europejskie, selektor sezonu (Faza 1 szlify / Faza 2)
-- Doimport **Ligi Europy** i **Ligi Konferencji** (obecnie w bazie tylko Liga Mistrzów)
-- `frontend/src/api/` — kolejne funkcje pobierające (`getBracket`, `getFixtures`) obok `getStandings`
+- **Tabela fazy ligowej** (LM/LE/Konf) — policzona z meczów lub z importu standings (Sesja 13)
+- **Selektor sezonu** na stronach rozgrywek (Wizja UX) + ewentualne dane wielosezonowe
+- Upiększacze drabinki: linie łączące pary; rozszerzenie `KNOCKOUT_ROUNDS` o rundy pucharów krajowych (żeby FA Cup pokazywał więcej niż QF→Final)

@@ -12,7 +12,7 @@
 |---------|------------------------------------------------------------|--------|
 | 6 lip   | Repo na GitHubie, sekrety w `.env`, backend uporządkowany  | [x]    |
 | 20 lip  | **Faza 1 backend**: tabele lig + puchary w bazie i API     | [x]    |
-| 10 sie  | **Faza 1 komplet**: UI tabel i drabinek działa             | [ ]    |
+| 10 sie  | **Faza 1 komplet**: UI tabel i drabinek działa             | [x]    |
 | 24 sie  | **Faza 2 komplet**: ulubione drużyny + dashboard           | [ ]    |
 | 7 wrz   | **Faza 3 komplet**: predictor (model Poissona)             | [ ]    |
 | 14 wrz  | **Faza 4 komplet**: symulator meczów i lig                 | [ ]    |
@@ -94,6 +94,8 @@
 > **Postęp (17 sie, Sesja 10):** „Routing i nawigacja" zrobione (kalendarzowo Sesja 10, log `sessions/session-10.md`) — React Router v7, strony `Home`/`League`, `useParams` (jeden `LeagueTable` dla wszystkich 6 lig), `Link` + layout z nagłówkiem, bazowy URL API w `.env` (`import.meta.env`). Nawigacja po 6 ligach działa (klikalne karty ⇄ tabela ligi). Dalej: TanStack Query (porządne pobieranie danych).
 >
 > **Postęp (18 sie, Sesja 11):** „Porządne pobieranie danych" zrobione (kalendarzowo Sesja 11, log `sessions/session-11.md`) — TanStack Query (`QueryClientProvider`, `useQuery`: cache/`isLoading`/`isError`), warstwa API `src/api/standings.ts` (`getStandings` + typy), refaktor `LeagueTable` (ręczny `useState`+`useEffect` → jeden `useQuery`, ~20 linii mniej). Plus kosmetyka: karty lig (siatka responsywna + hover) i nagłówek. Zanotowana nowa wizja UX (nawigacja przez kraje + selektor roku) — sekcja „Wizja docelowego UX". Dalej: drabinki pucharowe (UI).
+>
+> **Postęp (19 sie, Sesja 12):** „Drabinki pucharowe (UI)" zrobione (log `sessions/session-12.md`) — cała ścieżka drabinki (`api/bracket.ts` + `useQuery` + `Bracket` + `BracketPage`, trasa `/bracket/:id`), przebudowa na **drzewko turniejowe** (schodki przez `items-stretch`+`justify-around`, grupowanie dwumeczów, nagłówki `1/2/Σ` + agregat, zwężenie). Backend: doimport **Ligi Europy + Konferencji** (13→15 rozgrywek) + naprawa latentnego buga importu (`seen_team_ids` per-import). **Nawigacja**: HomePage jako accordion krajów (`<details>`) + puchary europejskie — Faza 1 klika się w całości. Dalej: tabela fazy ligowej (LM/LE/Konf) / szlify Fazy 1.
 
 ### Sesja 7 — [x] Start frontendu — ZROBIONE kalendarzowo w Sesji 8 (log `sessions/session-08.md`)
 - [x] Node.js w WSL (przez `nvm`, v20.20.2 LTS), npm 10.8.2; ekosystem JS przez analogię do Pythona
@@ -127,9 +129,10 @@
 
 **Czego się uczysz:** profesjonalne wzorce data-fetchingu (to samo robi się w firmach).
 
-### Sesja 11 — [ ] Drabinki pucharowe (UI)
-- [ ] Komponent `Bracket` — rundy jako kolumny (CSS grid/flex)
-- [ ] Strony pucharów krajowych + Ligi Mistrzów
+### Sesja 11 — [x] Drabinki pucharowe (UI) — ZROBIONE kalendarzowo w Sesji 12 (log `sessions/session-12.md`)
+- [x] Komponent `Bracket` — rundy jako kolumny, przebudowa na **drzewko turniejowe** (schodki + dwumecze + agregaty)
+- [x] Strony pucharów krajowych + Ligi Mistrzów (trasa `/bracket/:id`, `BracketPage`)
+- [x] (dodatkowo) doimport **Ligi Europy + Konferencji** (+ bug fix importu); **nawigacja** — accordion krajów na HomePage
 
 **Czego się uczysz:** budowa niestandardowego, złożonego komponentu UI.
 

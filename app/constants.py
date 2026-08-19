@@ -33,6 +33,8 @@ DOMESTIC_CUP_IDS: dict[int, str] = {
 # European competitions.
 EUROPEAN_COMPETITION_IDS: dict[int, str] = {
     2: "UEFA Champions League",
+    3: "UEFA Europa League",
+    848: "UEFA Conference League",
 }
 
 # Everything the project tracks, in one place. The ** operator unpacks each

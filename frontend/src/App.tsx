@@ -1,7 +1,7 @@
 import { Route, Routes, Link } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LeaguePage from "./pages/LeaguePage";
-
+import BracketPage from "./pages/BracketPage";
 function App() {
   return (
     <>
@@ -13,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/leagues/:id" element={<LeaguePage />} />
+        <Route path="/bracket/:id" element={<BracketPage />} />
       </Routes>
     </>
   );
