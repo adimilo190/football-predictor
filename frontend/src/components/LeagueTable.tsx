@@ -3,12 +3,13 @@ import { getStandings } from "../api/standings";
 
 type LeagueTableProps = {
   leagueId: string;
+  season: number;
 };
 
-function LeagueTable({ leagueId }: LeagueTableProps) {
+function LeagueTable({ leagueId, season }: LeagueTableProps) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["standings", leagueId],
-    queryFn: () => getStandings(leagueId),
+    queryKey: ["standings", leagueId, season],
+    queryFn: () => getStandings(leagueId, season),
   });
 
   if (isLoading) return <p>Loading...</p>;

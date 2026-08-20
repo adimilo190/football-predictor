@@ -1,6 +1,13 @@
 import type { Team } from "../api/standings";
 import type { Matchup } from "../api/bracket";
 
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString("pl-PL", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
 type MatchupCardProps = {
   matchup: Matchup;
 };
@@ -41,6 +48,9 @@ function MatchupCard({ matchup }: MatchupCardProps) {
         goals={matchup.legs.map((leg) => leg.bottomGoals)}
         aggregate={bottomAggregate}
       />
+      <div className="text-xs text-gray-400 text-right">
+        {matchup.legs.map((leg) => formatDate(leg.date)).join(" / ")}
+      </div>
     </div>
   );
 }

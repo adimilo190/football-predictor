@@ -96,6 +96,14 @@
 > **Postęp (18 sie, Sesja 11):** „Porządne pobieranie danych" zrobione (kalendarzowo Sesja 11, log `sessions/session-11.md`) — TanStack Query (`QueryClientProvider`, `useQuery`: cache/`isLoading`/`isError`), warstwa API `src/api/standings.ts` (`getStandings` + typy), refaktor `LeagueTable` (ręczny `useState`+`useEffect` → jeden `useQuery`, ~20 linii mniej). Plus kosmetyka: karty lig (siatka responsywna + hover) i nagłówek. Zanotowana nowa wizja UX (nawigacja przez kraje + selektor roku) — sekcja „Wizja docelowego UX". Dalej: drabinki pucharowe (UI).
 >
 > **Postęp (19 sie, Sesja 12):** „Drabinki pucharowe (UI)" zrobione (log `sessions/session-12.md`) — cała ścieżka drabinki (`api/bracket.ts` + `useQuery` + `Bracket` + `BracketPage`, trasa `/bracket/:id`), przebudowa na **drzewko turniejowe** (schodki przez `items-stretch`+`justify-around`, grupowanie dwumeczów, nagłówki `1/2/Σ` + agregat, zwężenie). Backend: doimport **Ligi Europy + Konferencji** (13→15 rozgrywek) + naprawa latentnego buga importu (`seen_team_ids` per-import). **Nawigacja**: HomePage jako accordion krajów (`<details>`) + puchary europejskie — Faza 1 klika się w całości. Dalej: tabela fazy ligowej (LM/LE/Konf) / szlify Fazy 1.
+>
+> **Postęp (20 sie, Sesja 13):** „Selektor sezonu (tabele)" + daty/godziny w drabince zrobione
+> (log `sessions/session-13.md`). Backend: endpoint `GET /leagues/{id}/seasons` (`DISTINCT`) +
+> doimport standings **2022/2023** z Free. Frontend: `getStandings`+`season` / nowa `getSeasons`,
+> **`season` w `queryKey`**, kontrolowany `<select>` w `LeaguePage` (useState=wybór UI,
+> useQuery=lista sezonów). **Decyzja źródła danych Fazy 2: właściciel kupuje API-Football premium**
+> (spójne ID z bazą + bieżący sezon + puchary; ryzyko #1 domknięte). Dalej: selektor dla drabinek
+> + start właściwej Fazy 2 po premium.
 
 ### Sesja 7 — [x] Start frontendu — ZROBIONE kalendarzowo w Sesji 8 (log `sessions/session-08.md`)
 - [x] Node.js w WSL (przez `nvm`, v20.20.2 LTS), npm 10.8.2; ekosystem JS przez analogię do Pythona

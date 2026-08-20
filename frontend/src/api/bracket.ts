@@ -34,7 +34,7 @@ export type Matchup = {
   teamBottom: Team;
   // One entry per leg: 1 for a single-leg cup, 2 for a home-and-away tie.
   // Ordered as the legs were played (fixtures come date-sorted from the API).
-  legs: { topGoals: number | null; bottomGoals: number | null }[];
+  legs: { topGoals: number | null; bottomGoals: number | null; date: string }[];
 };
 
 export function groupIntoMatchups(fixtures: Fixture[]): Matchup[] {
@@ -66,6 +66,7 @@ export function groupIntoMatchups(fixtures: Fixture[]): Matchup[] {
       return {
         topGoals: topIsHome ? leg.home_goals : leg.away_goals,
         bottomGoals: topIsHome ? leg.away_goals : leg.home_goals,
+        date: leg.date,
       };
     });
     matchups.push({ teamTop, teamBottom, legs: legResults });

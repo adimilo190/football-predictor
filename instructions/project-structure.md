@@ -3,7 +3,7 @@
 > Streszczenie całego projektu w jednym miejscu: co jest w każdym pliku/folderze i po co.
 > **Ten plik aktualizujemy przy każdej zmianie struktury** (nowy plik/folder = nowy wpis tutaj) —
 > to stały punkt rytuału końca sesji.
-> Stan na: Sesja 12 (2026-08-19).
+> Stan na: Sesja 13 (2026-08-20).
 
 ---
 
@@ -50,7 +50,7 @@ Pakiet Pythona (`__init__.py`). Warstwy od spodu do góry:
 | Plik | Co robi |
 |---|---|
 | `__init__.py` | Robi z `routers/` pakiet |
-| `competitions.py` | **Odczyty (READ)**: `GET /leagues`, `GET /leagues/{id}/standings` (sort po `rank`, `joinedload` przeciw N+1), `GET /leagues/{id}/fixtures` (płaska lista), `GET /leagues/{id}/bracket` (grupowanie rundami + filtr `knockout_only`). Helper `query_fixtures` (DRY) |
+| `competitions.py` | **Odczyty (READ)**: `GET /leagues`, `GET /leagues/{id}/standings` (sort po `rank`, `joinedload` przeciw N+1), `GET /leagues/{id}/fixtures` (płaska lista), `GET /leagues/{id}/bracket` (grupowanie rundami + filtr `knockout_only`), `GET /leagues/{id}/seasons` (**dostępne sezony** — `DISTINCT` ze `standings`, pod selektor). Helper `query_fixtures` (DRY) |
 | `imports.py` | **Zapisy / ETL (WRITE)**: `POST /import-leagues`, `POST /import-standings`, `POST /import-fixtures` + funkcje `fetch_*` (Extract z API-Football) i `upsert_*` (Transform+Load). Obsługa limitów i błędów HTTP |
 
 ---
@@ -82,13 +82,13 @@ Aplikacja SPA (single-page). Uruchomienie: `npm run dev` (w WSL, Node przez `nvm
 | `index.css` | Globalne style: `@import "tailwindcss"` (utility + preflight) + zmienne motywu i style `#root`/`h1` |
 | `App.css` | ⚠️ Pozostałość po szablonie Vite — **nieużywana** (nigdzie nieimportowana). Do sprzątnięcia |
 | `api/config.ts` | `API_BASE_URL` z `VITE_API_URL` (`import.meta.env` + fallback). Jedno źródło adresu backendu |
-| `api/standings.ts` | **Warstwa API (tabele)**: typy `Team`/`Standing` + `getStandings(leagueId)` (`fetch` + `throw` przy `!res.ok`). Wołana jako `queryFn` |
+| `api/standings.ts` | **Warstwa API (tabele)**: typy `Team`/`Standing` + `getStandings(leagueId, season)` (`fetch` z `?season=` + `throw` przy `!res.ok`) + `getSeasons(leagueId)` (lista dostępnych sezonów). Wołane jako `queryFn` |
 | `api/bracket.ts` | **Warstwa API (drabinki)**: typy `Fixture`/`BracketRound` + `getBracket(leagueId, knockoutOnly)`; oraz `Matchup` + `groupIntoMatchups` (grupowanie dwumeczów w pary pod drzewko) |
-| `components/LeagueTable.tsx` | Tabela ligowa: `useQuery(["standings", leagueId], getStandings)` → `data`/`isLoading`/`isError`, render `<table>` |
+| `components/LeagueTable.tsx` | Tabela ligowa: prop `season`; `useQuery(["standings", leagueId, season], getStandings)` (**sezon w kluczu** = cache per sezon) → `data`/`isLoading`/`isError`, render `<table>` |
 | `components/Bracket.tsx` | Drabinka: `useQuery(["bracket", leagueId], getBracket)` + **drzewko turniejowe** (kolumny rund `flex`+`items-stretch`+`justify-around`, `overflow-x-auto`); grupuje mecze przez `groupIntoMatchups`, renderuje `MatchupCard` |
-| `components/MatchupCard.tsx` | Karta pary: dwie drużyny (herb + nazwa) + wyniki legów w pudełkach; dla dwumeczu nagłówki `1/2/Σ` i wynik zsumowany (agregat) |
+| `components/MatchupCard.tsx` | Karta pary: dwie drużyny (herb + nazwa) + wyniki legów w pudełkach; dla dwumeczu nagłówki `1/2/Σ` i wynik zsumowany (agregat); wiersz **dat/godzin** meczów (helper `formatDate`, `toLocaleString`) |
 | `pages/HomePage.tsx` | Strona główna: **accordion** przez `<details>` — 6 krajów (`COUNTRIES`: liga→`/leagues/:id`, puchar→`/bracket/:id`) + „European Competitions" (→`/bracket/:id`) |
-| `pages/LeaguePage.tsx` | Strona ligi: czyta `:id` przez `useParams` (strażnik na brak), przekazuje `leagueId` do `LeagueTable` (tabela) |
+| `pages/LeaguePage.tsx` | Strona ligi: czyta `:id` (`useParams`); **selektor sezonu** — `useState` wybranego sezonu (UI state) + `useQuery(getSeasons)` (lista) + `<select>`; przekazuje `leagueId`+`season` do `LeagueTable` |
 | `pages/BracketPage.tsx` | Strona rozgrywki pucharowej: czyta `:id` przez `useParams` (strażnik), przekazuje `leagueId` do `Bracket` (drabinka) |
 | `data/leagues.ts` | Model nawigacji: typy `Competition`/`Country` + `COUNTRIES` (6 krajów: liga+puchar) i `EUROPEAN_COMPETITIONS` (LM/LE/Konf) — `id` z API-Football |
 | `assets/` | Grafiki z szablonu Vite (`react.svg`, `vite.svg`, `hero.png`) — obecnie nieużywane |
@@ -134,7 +134,7 @@ Migracja = wersjonowana zmiana schematu (jak commit, ale dla struktury tabel). S
 | `tools.md` | **CZYM budujemy**: opis stacku i notatki środowiskowe |
 | `progres.md` | Skrócona lista wszystkiego, co zrobiono (sekcja per sesja) |
 | `project-structure.md` | Ten plik — mapa projektu (aktualizowana co sesję) |
-| `sessions/` | **Logi sesji** (`session-01`…`session-11`): co zrobiono, decyzje, lekcje, TODO, praca domowa |
+| `sessions/` | **Logi sesji** (`session-01`…`session-13`): co zrobiono, decyzje, lekcje, TODO, praca domowa |
 
 ---
 
@@ -146,7 +146,7 @@ Nie jest plikiem w repo, ale to część projektu:
 |---|---|
 | `leagues` | **15** śledzonych rozgrywek (6 lig + 6 pucharów krajowych + LM/LE/Konf; id z API-Football, nazwa, kraj, logo) |
 | `teams` | Drużyny — ~1404 (ligowe + pucharowe/europejskie; +137 z importu LE/Konf w Sesji 12) |
-| `standings` | Wiersze tabel ligowych: liga+drużyna+sezon+statystyki — 114 (6 lig, sezon 2024) |
+| `standings` | Wiersze tabel ligowych: liga+drużyna+sezon+statystyki — ~340 (6 lig × sezony **2022–2024**; +~228 z importu 2022/2023 w Sesji 13) |
 | `fixtures` | Mecze (puchary krajowe + LM/LE/Konf) — **2411** (sezon 2024; +678 z LE/Konf w Sesji 12) |
 | `alembic_version` | „Zakładka" Alembica — ID aktualnie wykonanej migracji |
 
@@ -155,6 +155,6 @@ Nie jest plikiem w repo, ale to część projektu:
 ## Co dojdzie później (wg ROADMAP)
 
 - `app/prediction/` — model Poissona, niezależny od API (Sesja 16)
-- **Tabela fazy ligowej** (LM/LE/Konf) — policzona z meczów lub z importu standings (Sesja 13)
-- **Selektor sezonu** na stronach rozgrywek (Wizja UX) + ewentualne dane wielosezonowe
+- **Tabela fazy ligowej** (LM/LE/Konf) — policzona z meczów lub z importu standings (odłożone)
+- **Selektor sezonu** — ✅ zrobiony dla **tabel** (Sesja 13); zostaje dla **drabinek** (Sesja 14)
 - Upiększacze drabinki: linie łączące pary; rozszerzenie `KNOCKOUT_ROUNDS` o rundy pucharów krajowych (żeby FA Cup pokazywał więcej niż QF→Final)

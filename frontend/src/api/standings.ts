@@ -25,8 +25,19 @@ export type Standing = {
 // Fetch the standings table for a single league.
 // Returns the rows on success. Throws on a non-OK response so that TanStack Query
 // treats it as an error: fetch only rejects on network failures, never on 4xx/5xx.
-export async function getStandings(leagueId: string): Promise<Standing[]> {
-  const res = await fetch(`${API_BASE_URL}/leagues/${leagueId}/standings`);
+export async function getStandings(
+  leagueId: string,
+  season: number,
+): Promise<Standing[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/leagues/${leagueId}/standings?season=${season}`,
+  );
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function getSeasons(leagueId: string): Promise<number[]> {
+  const res = await fetch(`${API_BASE_URL}/leagues/${leagueId}/seasons`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }

@@ -76,6 +76,22 @@ def get_league_standings(
     return standings
 
 
+@router.get("/leagues/{league_id}/seasons", response_model=list[int])
+def get_league_seasons(league_id: int, db: Session = Depends(get_db)):
+
+    rows = (
+        db.query(models.Standing.season)
+        .filter(models.Standing.league_id == league_id)
+        .distinct()
+        .order_by(models.Standing.season.desc())
+        .all()
+    )
+    seasons = []
+    for row in rows:
+        seasons.append(row[0])
+    return seasons
+
+
 @router.get(
     "/leagues/{league_id}/fixtures",
     response_model=list[schemas.FixtureResponse],
