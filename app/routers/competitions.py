@@ -78,17 +78,27 @@ def get_league_standings(
 
 @router.get("/leagues/{league_id}/seasons", response_model=list[int])
 def get_league_seasons(league_id: int, db: Session = Depends(get_db)):
-
-    rows = (
+    # 1. Seasons that exist in the league table (STANDINGS) for this competition.
+    standings_seasons = ( 
         db.query(models.Standing.season)
         .filter(models.Standing.league_id == league_id)
-        .distinct()
-        .order_by(models.Standing.season.desc())
-        .all()
     )
+
+    # 2. Seasons that exist among matches (FIXTURES) for this competition.
+    fixtures_seasons = (
+        db.query(models.Fixture.season)
+        .filter(models.Fixture.league_id == league_id)
+    )
+
+    # 3. UNION merges both result sets and drops duplicates.
+    rows = standings_seasons.union(fixtures_seasons).all()
+
+    # 4. Unwrap the one-column tuples into a plain list of ints (same trick as
+    #    before: row[0]), then sort newest-first.
     seasons = []
     for row in rows:
         seasons.append(row[0])
+    seasons.sort(reverse=True)
     return seasons
 
 

@@ -4,12 +4,13 @@ import MatchupCard from "./MatchupCard";
 
 type BracketProps = {
   leagueId: string;
+  season: number;
 };
 
-function Bracket({ leagueId }: BracketProps) {
+function Bracket({ leagueId, season }: BracketProps) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["bracket", leagueId],
-    queryFn: () => getBracket(leagueId),
+    queryKey: ["bracket", leagueId, season],
+    queryFn: () => getBracket(leagueId, season),
   });
 
   if (isLoading) return <p>Loading...</p>;

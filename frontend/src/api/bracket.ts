@@ -15,10 +15,11 @@ export type BracketRound = { round: string; fixtures: Fixture[] };
 
 export async function getBracket(
   leagueId: string,
+  season: number,
   knockoutOnly = true,
 ): Promise<BracketRound[]> {
   const res = await fetch(
-    `${API_BASE_URL}/leagues/${leagueId}/bracket?knockout_only=${knockoutOnly}`,
+    `${API_BASE_URL}/leagues/${leagueId}/bracket?knockout_only=${knockoutOnly}&season=${season}`,
   );
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();

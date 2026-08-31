@@ -3,7 +3,7 @@
 > Streszczenie całego projektu w jednym miejscu: co jest w każdym pliku/folderze i po co.
 > **Ten plik aktualizujemy przy każdej zmianie struktury** (nowy plik/folder = nowy wpis tutaj) —
 > to stały punkt rytuału końca sesji.
-> Stan na: Sesja 13 (2026-08-20).
+> Stan na: Sesja 14 (2026-08-31).
 
 ---
 
@@ -50,7 +50,7 @@ Pakiet Pythona (`__init__.py`). Warstwy od spodu do góry:
 | Plik | Co robi |
 |---|---|
 | `__init__.py` | Robi z `routers/` pakiet |
-| `competitions.py` | **Odczyty (READ)**: `GET /leagues`, `GET /leagues/{id}/standings` (sort po `rank`, `joinedload` przeciw N+1), `GET /leagues/{id}/fixtures` (płaska lista), `GET /leagues/{id}/bracket` (grupowanie rundami + filtr `knockout_only`), `GET /leagues/{id}/seasons` (**dostępne sezony** — `DISTINCT` ze `standings`, pod selektor). Helper `query_fixtures` (DRY) |
+| `competitions.py` | **Odczyty (READ)**: `GET /leagues`, `GET /leagues/{id}/standings` (sort po `rank`, `joinedload` przeciw N+1), `GET /leagues/{id}/fixtures` (płaska lista), `GET /leagues/{id}/bracket` (grupowanie rundami + filtr `knockout_only`), `GET /leagues/{id}/seasons` (**dostępne sezony** — `UNION` sezonów ze `standings` (ligi) i `fixtures` (puchary), pod selektor tabel **i** drabinek). Helper `query_fixtures` (DRY) |
 | `imports.py` | **Zapisy / ETL (WRITE)**: `POST /import-leagues`, `POST /import-standings`, `POST /import-fixtures` + funkcje `fetch_*` (Extract z API-Football) i `upsert_*` (Transform+Load). Obsługa limitów i błędów HTTP |
 
 ---
@@ -145,9 +145,9 @@ Nie jest plikiem w repo, ale to część projektu:
 | Tabela | Co trzyma |
 |---|---|
 | `leagues` | **15** śledzonych rozgrywek (6 lig + 6 pucharów krajowych + LM/LE/Konf; id z API-Football, nazwa, kraj, logo) |
-| `teams` | Drużyny — ~1404 (ligowe + pucharowe/europejskie; +137 z importu LE/Konf w Sesji 12) |
-| `standings` | Wiersze tabel ligowych: liga+drużyna+sezon+statystyki — ~340 (6 lig × sezony **2022–2024**; +~228 z importu 2022/2023 w Sesji 13) |
-| `fixtures` | Mecze (puchary krajowe + LM/LE/Konf) — **2411** (sezon 2024; +678 z LE/Konf w Sesji 12) |
+| `teams` | Drużyny — **1959** (ligowe + pucharowe/europejskie; +441 z importu fixtures 2025/2026 w Sesji 14) |
+| `standings` | Wiersze tabel ligowych: liga+drużyna+sezon+statystyki — **572** (6 lig × sezony **2022–2026**; +228 z importu 2025/2026 w Sesji 14) |
+| `fixtures` | Mecze (puchary krajowe + LM/LE/Konf) — **5893** (sezony **2024–2026**; +3482 z importu 2025/2026 w Sesji 14) |
 | `alembic_version` | „Zakładka" Alembica — ID aktualnie wykonanej migracji |
 
 ---
@@ -156,5 +156,5 @@ Nie jest plikiem w repo, ale to część projektu:
 
 - `app/prediction/` — model Poissona, niezależny od API (Sesja 16)
 - **Tabela fazy ligowej** (LM/LE/Konf) — policzona z meczów lub z importu standings (odłożone)
-- **Selektor sezonu** — ✅ zrobiony dla **tabel** (Sesja 13); zostaje dla **drabinek** (Sesja 14)
+- **Selektor sezonu** — ✅ zrobiony dla **tabel** (Sesja 13) **i drabinek** (Sesja 14, `/seasons` na `UNION`)
 - Upiększacze drabinki: linie łączące pary; rozszerzenie `KNOCKOUT_ROUNDS` o rundy pucharów krajowych (żeby FA Cup pokazywał więcej niż QF→Final)

@@ -9,7 +9,7 @@ function LeaguePage() {
 
   // UI state: which season the user picked. This is a local interface choice,
   // not server data, so it belongs in useState (not useQuery).
-  const [season, setSeason] = useState(2024);
+  const [season, setSeason] = useState(2026);
 
   // Server data: the seasons we actually have for this league. useQuery handles
   // the fetch, cache and loading/error for us. enabled=false skips the request

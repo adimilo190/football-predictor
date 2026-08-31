@@ -104,6 +104,16 @@
 > useQuery=lista sezonów). **Decyzja źródła danych Fazy 2: właściciel kupuje API-Football premium**
 > (spójne ID z bazą + bieżący sezon + puchary; ryzyko #1 domknięte). Dalej: selektor dla drabinek
 > + start właściwej Fazy 2 po premium.
+>
+> **Postęp (31 sie, Sesja 14):** „Selektor sezonu (drabinki)" zrobione (log `session-14.md`).
+> Backend: `GET /leagues/{id}/seasons` przerobiony na **`UNION`** — jeden endpoint dla lig
+> (ze `standings`) i pucharów (z `fixtures`). Frontend: cała ścieżka sezonu w drabince
+> (`getBracket(season)` → `Bracket` z `season` w `queryKey` → selektor `<select>` na
+> `BracketPage`, ten sam `getSeasons` co `LeaguePage`). **Premium API-Football (plan Pro)
+> uruchomione i zweryfikowane** (7500 zapytań/dobę, dostęp do sezonów do 2026/27 „żywego");
+> doimport standings + fixtures **2025 i 2026** — żywy sezon wszedł do bazy (teams 1959,
+> standings 572, fixtures 5893). Ryzyko #1 domknięte w praktyce. Dalej: dług test `/seasons`
+> + **start właściwej Fazy 2** (wyniki/terminarz drużyn + wyszukiwarka) na żywych danych.
 
 ### Sesja 7 — [x] Start frontendu — ZROBIONE kalendarzowo w Sesji 8 (log `sessions/session-08.md`)
 - [x] Node.js w WSL (przez `nvm`, v20.20.2 LTS), npm 10.8.2; ekosystem JS przez analogię do Pythona
