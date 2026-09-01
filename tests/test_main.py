@@ -196,3 +196,59 @@ def test_get_bracket_with_knockout_only(client, db_session):
     data = response.json()
     assert len(data) == 1
     assert data[0]["round"] == "Final"
+
+
+def test_get_seasons_merges_standings_and_fixtures(client, db_session):
+    """GET /leagues/{id}/seasons returns the union of seasons from standings and fixtures."""
+
+    # Arrange
+    db_session.add(models.League(id=1, name="Test League", country="Testland"))
+    db_session.add(models.Team(id=50, name="Team A", country="Testland"))
+    db_session.add(models.Team(id=51, name="Team B", country="Testland"))
+    # Seasons in standings: 2023, 2024
+    db_session.add(
+        models.Standing(
+            league_id=1,
+            team_id=50,
+            season=2023,
+        )
+    )
+    db_session.add(
+        models.Standing(
+            league_id=1,
+            team_id=51,
+            season=2024,
+        )
+    )
+    # Seasons in fixtures: 2024, 2025
+    db_session.add(
+        models.Fixture(
+            id=30,
+            league_id=1,
+            season=2024,
+            round="1",
+            date=datetime(2024, 8, 1, 18, 0),
+            home_team_id=50,
+            away_team_id=51,
+        )
+    )
+    db_session.add(
+        models.Fixture(
+            id=31,
+            league_id=1,
+            season=2025,
+            round="1",
+            date=datetime(2025, 8, 1, 18, 0),
+            home_team_id=50,
+            away_team_id=51,
+        )
+    )
+    db_session.commit()
+
+    # Act
+    response = client.get("/leagues/1/seasons")
+
+    # Assert: should return the union of seasons: [2025, 2024, 2023]
+    assert response.status_code == 200
+    data = response.json()
+    assert data == [2025, 2024, 2023]

@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import competitions, imports
+from app.routers import teams
 
 # NOTE: tables are no longer created here. The database schema is managed
 # exclusively by Alembic migrations — run: alembic upgrade head
@@ -23,6 +24,7 @@ app.add_middleware(
 # the write/import endpoints that pull data from API-Football.
 app.include_router(competitions.router)
 app.include_router(imports.router)
+app.include_router(teams.router)
 
 
 # Health check: a simple ping confirming the server and DB are reachable.

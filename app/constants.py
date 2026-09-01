@@ -57,3 +57,8 @@ KNOCKOUT_ROUNDS: set[str] = {
     "Semi-finals",
     "Final",
 }
+
+# Fixture statuses that count as "played with a final result": full time,
+# after extra time (AET), penalties (PEN). The team results endpoint filters on
+# these to keep out scheduled, postponed, cancelled or in-progress matches.
+FINISHED_STATUSES: set[str] = {"FT", "AET", "PEN"}

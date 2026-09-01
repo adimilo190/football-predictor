@@ -13,9 +13,7 @@ from app import models
 from app.config import settings
 from app.constants import (
     DEFAULT_SEASON,
-    DOMESTIC_CUP_IDS,
     DOMESTIC_LEAGUE_IDS,
-    EUROPEAN_COMPETITION_IDS,
     TARGET_LEAGUE_IDS,
 )
 from app.database import get_db
@@ -390,17 +388,14 @@ async def import_standings(season: int = DEFAULT_SEASON, db: Session = Depends(g
     }
 
 
-# import-fixtures: full ETL for cup matches — one API call per competition
-# (6 domestic cups + UCL). Empty competitions are tolerated (fetch returns []),
-# so a gap in one does not abort the whole import.
+# import-fixtures: full ETL for every tracked competition — one API call each
+# (6 leagues + 6 domestic cups + 3 European). Empty competitions are tolerated
+# (fetch returns []), so a gap in one does not abort the whole import.
 @router.post("/import-fixtures")
 async def import_fixtures(season: int = DEFAULT_SEASON, db: Session = Depends(get_db)):
-    cups_report = {}
+    competitions_report = {}
     totals = {"teams_added": 0, "fixtures_added": 0, "fixtures_updated": 0}
-    competitions = {
-        **DOMESTIC_CUP_IDS,
-        **EUROPEAN_COMPETITION_IDS,
-    }  # 6 cups + 3 European
+    competitions = TARGET_LEAGUE_IDS  # 6 cups + 3 European + 6 leagues
     # One shared set for the whole import: a club can appear in several
     # competitions (a team knocked out of one European cup drops into a lower
     # one), and with autoflush=False a pending team is invisible to the next
@@ -410,13 +405,13 @@ async def import_fixtures(season: int = DEFAULT_SEASON, db: Session = Depends(ge
         for league_id, name in competitions.items():
             fixtures = await fetch_fixtures(client, league_id, season)
             stats = upsert_fixtures(db, league_id, season, fixtures, seen_team_ids)
-            cups_report[name] = stats
+            competitions_report[name] = stats
             for key in totals:
                 totals[key] += stats[key]
     db.commit()  # one commit = one all-or-nothing transaction
     return {
-        "message": f"Imported fixtures for {len(cups_report)} competitions.",
+        "message": f"Imported fixtures for {len(competitions_report)} competitions.",
         "season": season,
         "totals": totals,
-        "cups": cups_report,
+        "competitions": competitions_report,
     }

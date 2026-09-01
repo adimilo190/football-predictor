@@ -162,11 +162,20 @@
 
 ## BLOK 3 — Faza 2: ulubione drużyny (tygodnie 7–8: 11–24 sie)
 > Sezon 2026/27 właśnie startuje — pojawiają się żywe dane!
+>
+> **Postęp (1 wrz, Sesja 15):** „Backend: wyniki i terminarz drużyn" **zrobione**
+> (log `session-15.md`) — na żywych danych 2026. Import meczów **ligowych**
+> (rozszerzenie `import-fixtures` o ligi przez `TARGET_LEAGUE_IDS`; +2087 fixtures,
+> baza fixtures 5893→7980). Nowy router `app/routers/teams.py` z trzema endpointami:
+> `GET /teams/{id}/past-matches` (rozegrane, `or_`+`FINISHED_STATUSES`+`desc`),
+> `GET /teams/{id}/future-matches` (zaplanowane, `NS`+`asc`), `GET /teams?search=`
+> (`ilike`). Domknięty też dług testowy `/seasons` z S14 (pytest 8/8). Dalej:
+> frontend Fazy 2 (wyszukiwarka + ulubione w `localStorage`) + testy nowych endpointów.
 
-### Sesja 13 — [ ] Backend: wyniki i terminarz drużyn
-- [ ] Import fixtures ligowych (przeszłe + przyszłe kolejki)
-- [ ] `GET /teams/{id}/results?last=5`, `GET /teams/{id}/fixtures?next=5`
-- [ ] `GET /teams?search=...` (wyszukiwarka)
+### Sesja 13 — [x] Backend: wyniki i terminarz drużyn — ZROBIONE w Sesji 15 (log `sessions/session-15.md`)
+- [x] Import fixtures ligowych (przeszłe + przyszłe kolejki) — rozszerzony `POST /import-fixtures` (ligi + puchary + europejskie)
+- [x] `GET /teams/{id}/past-matches?last=5`, `GET /teams/{id}/future-matches?next=5` (nazwy zmienione z `results`/`fixtures` — uniknięcie kolizji z `get_league_fixtures`)
+- [x] `GET /teams?search=...` (wyszukiwarka, `ilike` — zawiera frazę, case-insensitive)
 
 **Czego się uczysz:** parametry zapytań, filtrowanie i sortowanie w SQLAlchemy, indeksy.
 

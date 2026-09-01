@@ -3,7 +3,7 @@
 > Streszczenie całego projektu w jednym miejscu: co jest w każdym pliku/folderze i po co.
 > **Ten plik aktualizujemy przy każdej zmianie struktury** (nowy plik/folder = nowy wpis tutaj) —
 > to stały punkt rytuału końca sesji.
-> Stan na: Sesja 14 (2026-08-31).
+> Stan na: Sesja 15 (2026-09-01).
 
 ---
 
@@ -39,7 +39,7 @@ Pakiet Pythona (`__init__.py`). Warstwy od spodu do góry:
 | `database.py` | **Połączenie z PostgreSQL**: `engine`, `SessionLocal` (fabryka sesji), `Base` (klasa bazowa modeli) + zależność `get_db` (jedna sesja na request; tu, by uniknąć cyklu importów) |
 | `models.py` | **Modele SQLAlchemy = tabele**: `League` (rozgrywki), `Team` (drużyna — bez ligi, bo gra w wielu), `Standing` (wiersz tabeli: liga+drużyna+sezon+statystyki), `Fixture` (mecz: **dwa** FK do `teams` — home/away, wynik, data, runda, status) |
 | `schemas.py` | **Schematy Pydantic = kontrakt API** (co wychodzi na zewnątrz): `LeagueResponse`, `TeamResponse`, `StandingResponse` (zagnieżdżona drużyna), `FixtureResponse` (dwie drużyny, gole nullable), `BracketRound` (runda + lista meczów; budowany ręcznie) |
-| `constants.py` | **Stałe biznesowe**: `TARGET_LEAGUE_IDS` (**15** rozgrywek = `DOMESTIC_LEAGUE_IDS` + `DOMESTIC_CUP_IDS` + `EUROPEAN_COMPETITION_IDS` z LM/LE/Konf), `DEFAULT_SEASON = 2024`, `KNOCKOUT_ROUNDS` (nazwy rund pucharowych dla filtra `knockout_only`) |
+| `constants.py` | **Stałe biznesowe**: `TARGET_LEAGUE_IDS` (**15** rozgrywek = `DOMESTIC_LEAGUE_IDS` + `DOMESTIC_CUP_IDS` + `EUROPEAN_COMPETITION_IDS` z LM/LE/Konf), `DEFAULT_SEASON = 2024`, `KNOCKOUT_ROUNDS` (nazwy rund pucharowych dla filtra `knockout_only`), `FINISHED_STATUSES` (`{FT, AET, PEN}` — statusy meczu rozegranego, dla `past-matches`) |
 | `main.py` | **Cienki punkt wejścia** (~30 linii): tworzy `FastAPI`, konfiguruje **CORS** (origin `:5173`), rejestruje routery. Endpointy żyją w `routers/`. Dokumentacja: `/docs` (Swagger UI) |
 | `routers/` | **Endpointy podzielone na moduły** — szczegóły niżej |
 
@@ -51,7 +51,8 @@ Pakiet Pythona (`__init__.py`). Warstwy od spodu do góry:
 |---|---|
 | `__init__.py` | Robi z `routers/` pakiet |
 | `competitions.py` | **Odczyty (READ)**: `GET /leagues`, `GET /leagues/{id}/standings` (sort po `rank`, `joinedload` przeciw N+1), `GET /leagues/{id}/fixtures` (płaska lista), `GET /leagues/{id}/bracket` (grupowanie rundami + filtr `knockout_only`), `GET /leagues/{id}/seasons` (**dostępne sezony** — `UNION` sezonów ze `standings` (ligi) i `fixtures` (puchary), pod selektor tabel **i** drabinek). Helper `query_fixtures` (DRY) |
-| `imports.py` | **Zapisy / ETL (WRITE)**: `POST /import-leagues`, `POST /import-standings`, `POST /import-fixtures` + funkcje `fetch_*` (Extract z API-Football) i `upsert_*` (Transform+Load). Obsługa limitów i błędów HTTP |
+| `imports.py` | **Zapisy / ETL (WRITE)**: `POST /import-leagues`, `POST /import-standings`, `POST /import-fixtures` (ligi + puchary + europejskie = `TARGET_LEAGUE_IDS`) + funkcje `fetch_*` (Extract z API-Football) i `upsert_*` (Transform+Load). Obsługa limitów i błędów HTTP |
+| `teams.py` | **Odczyty o drużynach (READ)**: `GET /teams/{id}/past-matches` (ostatnie rozegrane — `or_` home/away + `FINISHED_STATUSES` + `date desc` + `limit`), `GET /teams/{id}/future-matches` (najbliższe zaplanowane — `status NS` + `date asc`), `GET /teams?search=` (wyszukiwarka — `name.ilike("%…%")`, `limit 20`). Mecze/wyniki **cross-competition** (forma drużyny niezależnie od rozgrywki) |
 
 ---
 
@@ -103,7 +104,7 @@ Aplikacja SPA (single-page). Uruchomienie: `npm run dev` (w WSL, Node przez `nvm
 |---|---|
 | `__init__.py` | Robi z `tests/` pakiet (pytest dokłada katalog projektu do `sys.path`) |
 | `conftest.py` | **Infrastruktura testowa**: izolowana baza **SQLite in-memory** (`StaticPool`), podmiana `get_db` przez `app.dependency_overrides`, autouse fixture czyszcząca bazę per test, fixtures `client`/`db_session` |
-| `test_main.py` | **7 testów** endpointów (Arrange–Act–Assert, własny seed): `/`, `/leagues`, `/standings`, `/fixtures`, `/bracket` (wszystkie rundy + dowód sortu, oraz filtr `knockout_only`), błędne id → 404 |
+| `test_main.py` | **8 testów** endpointów (Arrange–Act–Assert, własny seed): `/`, `/leagues`, `/standings`, `/fixtures`, `/bracket` (wszystkie rundy + dowód sortu, oraz filtr `knockout_only`), `/seasons` (`UNION` standings+fixtures + dedup + sort), błędne id → 404 |
 
 **Uruchomienie:** `venv/bin/pytest -v` (w WSL). Testy nie ruszają prawdziwej bazy ani API-Football.
 
@@ -134,7 +135,7 @@ Migracja = wersjonowana zmiana schematu (jak commit, ale dla struktury tabel). S
 | `tools.md` | **CZYM budujemy**: opis stacku i notatki środowiskowe |
 | `progres.md` | Skrócona lista wszystkiego, co zrobiono (sekcja per sesja) |
 | `project-structure.md` | Ten plik — mapa projektu (aktualizowana co sesję) |
-| `sessions/` | **Logi sesji** (`session-01`…`session-13`): co zrobiono, decyzje, lekcje, TODO, praca domowa |
+| `sessions/` | **Logi sesji** (`session-01`…`session-15`): co zrobiono, decyzje, lekcje, TODO, praca domowa |
 
 ---
 
@@ -145,9 +146,9 @@ Nie jest plikiem w repo, ale to część projektu:
 | Tabela | Co trzyma |
 |---|---|
 | `leagues` | **15** śledzonych rozgrywek (6 lig + 6 pucharów krajowych + LM/LE/Konf; id z API-Football, nazwa, kraj, logo) |
-| `teams` | Drużyny — **1959** (ligowe + pucharowe/europejskie; +441 z importu fixtures 2025/2026 w Sesji 14) |
-| `standings` | Wiersze tabel ligowych: liga+drużyna+sezon+statystyki — **572** (6 lig × sezony **2022–2026**; +228 z importu 2025/2026 w Sesji 14) |
-| `fixtures` | Mecze (puchary krajowe + LM/LE/Konf) — **5893** (sezony **2024–2026**; +3482 z importu 2025/2026 w Sesji 14) |
+| `teams` | Drużyny — **1962** (ligowe + pucharowe/europejskie; +3 z importu meczów ligowych 2026 w Sesji 15) |
+| `standings` | Wiersze tabel ligowych: liga+drużyna+sezon+statystyki — **572** (6 lig × sezony **2022–2026**) |
+| `fixtures` | Mecze — **7980** (puchary krajowe + LM/LE/Konf **oraz mecze ligowe**; sezony **2024–2026**; +2087 z importu meczów ligowych 2026 w Sesji 15) |
 | `alembic_version` | „Zakładka" Alembica — ID aktualnie wykonanej migracji |
 
 ---
