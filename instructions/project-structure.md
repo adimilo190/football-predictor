@@ -3,7 +3,7 @@
 > Streszczenie całego projektu w jednym miejscu: co jest w każdym pliku/folderze i po co.
 > **Ten plik aktualizujemy przy każdej zmianie struktury** (nowy plik/folder = nowy wpis tutaj) —
 > to stały punkt rytuału końca sesji.
-> Stan na: Sesja 15 (2026-09-01).
+> Stan na: Sesja 16 (2026-09-04).
 
 ---
 
@@ -23,6 +23,7 @@
 | `requirements.txt` | Zamrożone wersje paczek Pythona — `pip install -r requirements.txt` odtwarza środowisko (`pip freeze` po każdej instalacji) |
 | `CLAUDE.md` | Zasady współpracy: tryb nauki, rytm (jeden krok naraz), rytuał końca sesji, środowisko (WSL, venv, PostgreSQL) |
 | `.claude/` | Ustawienia Claude Code dla projektu (`settings.local.json` — uprawnienia narzędzi) |
+| `.vscode/` | Lokalne ustawienia VS Code (`settings.json` — format-on-save: Ruff/Python 4 spacje, Prettier/TS 2 spacje). W `.gitignore` — NIE w gicie |
 | `.git/` | Wewnętrzna baza gita (historia commitów). Nie ruszamy ręcznie |
 | `__pycache__/`, `.ruff_cache/`, `.pytest_cache/` | Automatyczne cache Pythona / Ruffa / pytest — można skasować, odtworzą się. NIE w gicie |
 
@@ -79,18 +80,22 @@ Aplikacja SPA (single-page). Uruchomienie: `npm run dev` (w WSL, Node przez `nvm
 | Plik / folder | Co robi |
 |---|---|
 | `main.tsx` | **Punkt wejścia Reacta**: montuje `<App/>` w `#root`, owinięty w `BrowserRouter` (routing) i `QueryClientProvider` (cache TanStack Query); importuje `index.css` |
-| `App.tsx` | **Layout + routing**: wspólny `<header>` (klikalny tytuł → `/`) nad `<Routes>`; trasy `/` → `HomePage`, `/leagues/:id` → `LeaguePage` (tabela), `/bracket/:id` → `BracketPage` (drabinka) |
-| `index.css` | Globalne style: `@import "tailwindcss"` (utility + preflight) + zmienne motywu i style `#root`/`h1` |
+| `App.tsx` | **Layout + routing**: wspólny `<header>` (klikalny tytuł → `/`) nad `<Routes>`; trasy `/` → `HomePage`, `/leagues/:id` → `LeaguePage` (tabela), `/bracket/:id` → `BracketPage` (drabinka), **`/teams` → `SearchPage`** (wyszukiwarka), **`/teams/:id` → `TeamPage`** (mecze drużyny) |
+| `index.css` | Globalne style: `@import "tailwindcss"` (utility + preflight) + zmienne motywu i style `#root`/`h1`. **Wymuszony ciemny motyw** (wartości dark w `:root` + `color-scheme: dark`, usunięta bramka `@media prefers-color-scheme`). ⚠️ Globalne `h1`/`h2` (font/margin) z szablonu — nielayerowane, biją utilki Tailwinda; do sprzątnięcia |
 | `App.css` | ⚠️ Pozostałość po szablonie Vite — **nieużywana** (nigdzie nieimportowana). Do sprzątnięcia |
 | `api/config.ts` | `API_BASE_URL` z `VITE_API_URL` (`import.meta.env` + fallback). Jedno źródło adresu backendu |
 | `api/standings.ts` | **Warstwa API (tabele)**: typy `Team`/`Standing` + `getStandings(leagueId, season)` (`fetch` z `?season=` + `throw` przy `!res.ok`) + `getSeasons(leagueId)` (lista dostępnych sezonów). Wołane jako `queryFn` |
-| `api/bracket.ts` | **Warstwa API (drabinki)**: typy `Fixture`/`BracketRound` + `getBracket(leagueId, knockoutOnly)`; oraz `Matchup` + `groupIntoMatchups` (grupowanie dwumeczów w pary pod drzewko) |
+| `api/bracket.ts` | **Warstwa API (drabinki)**: typy `Fixture`/`BracketRound` + `getBracket(leagueId, season, knockoutOnly)`; oraz `Matchup` + `groupIntoMatchups` (grupowanie dwumeczów w pary pod drzewko) |
+| `api/teams.ts` | **Warstwa API (drużyny)**: `searchTeams(search)` (`?search=` + `encodeURIComponent`), `getPastMatches(id)`, `getFutureMatches(id)` — reuse typów `Team`/`Fixture` przez `import type`. Wołane jako `queryFn` |
+| `hooks/useDebounce.ts` | **Custom hook** `useDebounce<T>(value, delayMs)`: opóźniona kopia wartości (`useState` + `useEffect` + `setTimeout` + cleanup `clearTimeout`). Używany przez `SearchPage` — fetch po ustaniu pisania, nie po każdym znaku |
 | `components/LeagueTable.tsx` | Tabela ligowa: prop `season`; `useQuery(["standings", leagueId, season], getStandings)` (**sezon w kluczu** = cache per sezon) → `data`/`isLoading`/`isError`, render `<table>` |
 | `components/Bracket.tsx` | Drabinka: `useQuery(["bracket", leagueId], getBracket)` + **drzewko turniejowe** (kolumny rund `flex`+`items-stretch`+`justify-around`, `overflow-x-auto`); grupuje mecze przez `groupIntoMatchups`, renderuje `MatchupCard` |
-| `components/MatchupCard.tsx` | Karta pary: dwie drużyny (herb + nazwa) + wyniki legów w pudełkach; dla dwumeczu nagłówki `1/2/Σ` i wynik zsumowany (agregat); wiersz **dat/godzin** meczów (helper `formatDate`, `toLocaleString`) |
-| `pages/HomePage.tsx` | Strona główna: **accordion** przez `<details>` — 6 krajów (`COUNTRIES`: liga→`/leagues/:id`, puchar→`/bracket/:id`) + „European Competitions" (→`/bracket/:id`) |
+| `components/MatchupCard.tsx` | Karta pary: dwie drużyny (herb + nazwa) + wyniki legów w pudełkach; dla dwumeczu nagłówki `1/2/Σ` i wynik zsumowany (agregat); wiersz **dat/godzin** meczów (helper `formatDate`, `toLocaleString`). **Reużyty też w `TeamPage`** (pojedynczy mecz = dwumecz z jedną nogą, przez adapter `fixtureToMatchup`). Style pod ciemny motyw (`bg-gray-800` karta, `bg-gray-700` pudełka) |
+| `pages/HomePage.tsx` | Strona główna: karta **„Find team"** → `/teams` (wyszukiwarka) + **accordion** przez `<details>` — 6 krajów (`COUNTRIES`: liga→`/leagues/:id`, puchar→`/bracket/:id`) + „European Competitions" (→`/bracket/:id`) |
 | `pages/LeaguePage.tsx` | Strona ligi: czyta `:id` (`useParams`); **selektor sezonu** — `useState` wybranego sezonu (UI state) + `useQuery(getSeasons)` (lista) + `<select>`; przekazuje `leagueId`+`season` do `LeagueTable` |
 | `pages/BracketPage.tsx` | Strona rozgrywki pucharowej: czyta `:id` przez `useParams` (strażnik), przekazuje `leagueId` do `Bracket` (drabinka) |
+| `pages/SearchPage.tsx` | **Wyszukiwarka drużyn**: kontrolowany `<input>` → `useDebounce(300)` → `useQuery(["teamSearch", term], searchTeams, enabled: term.length>0)`; wyniki jako `<Link to={/teams/:id}>`. Render stanów przez zmienną + `if` (input zostaje na ekranie) |
+| `pages/TeamPage.tsx` | **Mecze drużyny** (`/teams/:id`): dwa `useQuery` (`getPastMatches`/`getFutureMatches`), guardy po hookach (`if (!past||!future) return null` = zawężenie typu); adapter `fixtureToMatchup` + reuse `MatchupCard`; nagłówek (logo+nazwa z 1. meczu) + dwie kolumny past/future (`flex gap-8`) |
 | `data/leagues.ts` | Model nawigacji: typy `Competition`/`Country` + `COUNTRIES` (6 krajów: liga+puchar) i `EUROPEAN_COMPETITIONS` (LM/LE/Konf) — `id` z API-Football |
 | `assets/` | Grafiki z szablonu Vite (`react.svg`, `vite.svg`, `hero.png`) — obecnie nieużywane |
 
@@ -104,7 +109,7 @@ Aplikacja SPA (single-page). Uruchomienie: `npm run dev` (w WSL, Node przez `nvm
 |---|---|
 | `__init__.py` | Robi z `tests/` pakiet (pytest dokłada katalog projektu do `sys.path`) |
 | `conftest.py` | **Infrastruktura testowa**: izolowana baza **SQLite in-memory** (`StaticPool`), podmiana `get_db` przez `app.dependency_overrides`, autouse fixture czyszcząca bazę per test, fixtures `client`/`db_session` |
-| `test_main.py` | **8 testów** endpointów (Arrange–Act–Assert, własny seed): `/`, `/leagues`, `/standings`, `/fixtures`, `/bracket` (wszystkie rundy + dowód sortu, oraz filtr `knockout_only`), `/seasons` (`UNION` standings+fixtures + dedup + sort), błędne id → 404 |
+| `test_main.py` | **12 testów** endpointów (Arrange–Act–Assert, własny seed): `/`, `/leagues`, `/standings`, `/fixtures`, `/bracket` (wszystkie rundy + dowód sortu, oraz filtr `knockout_only`), `/seasons` (`UNION` standings+fixtures + dedup + sort), `/teams/{id}/past-matches` (scenariusz szczelny `or_`/status/sort), `/teams/{id}/future-matches` (`NS`+`asc`), `/teams?search=` (`ilike` substring + case-insensitive + `order_by` + pusty wynik), błędne id → 404 (standings + drużyna) |
 
 **Uruchomienie:** `venv/bin/pytest -v` (w WSL). Testy nie ruszają prawdziwej bazy ani API-Football.
 
@@ -155,7 +160,8 @@ Nie jest plikiem w repo, ale to część projektu:
 
 ## Co dojdzie później (wg ROADMAP)
 
-- `app/prediction/` — model Poissona, niezależny od API (Sesja 16)
+- **Close-out Fazy 2 (Sesja 17)**: dark-polish komponentów (tabela ligowa, hovery) + domyślny sezon = najnowszy (`seasons[0]`); sprzątnięcie `index.css`/`App.css` (pozostałości szablonu)
+- `app/prediction/` — model Poissona, niezależny od API (**Sesja 17**, po close-oucie Fazy 2)
 - **Tabela fazy ligowej** (LM/LE/Konf) — policzona z meczów lub z importu standings (odłożone)
 - **Selektor sezonu** — ✅ zrobiony dla **tabel** (Sesja 13) **i drabinek** (Sesja 14, `/seasons` na `UNION`)
 - Upiększacze drabinki: linie łączące pary; rozszerzenie `KNOCKOUT_ROUNDS` o rundy pucharów krajowych (żeby FA Cup pokazywał więcej niż QF→Final)

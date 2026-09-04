@@ -252,3 +252,182 @@ def test_get_seasons_merges_standings_and_fixtures(client, db_session):
     assert response.status_code == 200
     data = response.json()
     assert data == [2025, 2024, 2023]
+
+
+def test_get_team_past_matches(client, db_session):
+    """GET /teams/{id}/past-matches returns the last N finished matches for a team."""
+
+    # Arrange
+    db_session.add(models.Team(id=1, name="Team A", country="Testland"))
+    db_session.add(models.Team(id=2, name="Team B", country="Testland"))
+    db_session.add(models.Team(id=3, name="Team C", country="Testland"))
+    db_session.add(models.League(id=1, name="Test League", country="Testland"))
+    db_session.add(
+        models.Fixture(
+            id=1,
+            league_id=1,
+            season=2024,
+            home_team_id=1,
+            away_team_id=2,
+            date=datetime(2024, 8, 1, 18, 0),
+            status="FT",  # Finished
+            home_goals=2,
+            away_goals=1,
+        )
+    )
+    db_session.add(
+        models.Fixture(
+            id=2,
+            league_id=1,
+            season=2024,
+            home_team_id=2,
+            away_team_id=1,
+            date=datetime(2024, 8, 10, 18, 0),
+            status="FT",  # Finished
+            home_goals=0,
+            away_goals=3,
+        )
+    )
+    db_session.add(
+        models.Fixture(
+            id=3,
+            league_id=1,
+            season=2024,
+            home_team_id=1,
+            away_team_id=3,
+            date=datetime(2024, 8, 20, 18, 0),
+            status="NS",  # Not started yet
+        )
+    )
+    db_session.add(
+        models.Fixture(
+            id=4,
+            league_id=1,
+            season=2024,
+            home_team_id=2,
+            away_team_id=3,
+            date=datetime(2024, 8, 15, 18, 0),
+            status="FT",  # Finished
+            home_goals=1,
+            away_goals=1,
+        )
+    )
+    db_session.commit()
+
+    # Act
+    response = client.get("/teams/1/past-matches")
+
+    # Assert: should return the last 2 finished matches for Team A
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert data[0]["id"] == 2
+    assert data[1]["id"] == 1
+    assert data[0]["away_team"]["name"] == "Team A"
+    assert data[1]["home_team"]["name"] == "Team A"
+
+
+def test_get_team_future_matches(client, db_session):
+    """GET /teams/{id}/future-matches returns the next N future matches for a team."""
+
+    # Arrange
+    db_session.add(models.Team(id=1, name="Team A", country="Testland"))
+    db_session.add(models.Team(id=2, name="Team B", country="Testland"))
+    db_session.add(models.Team(id=3, name="Team C", country="Testland"))
+    db_session.add(models.League(id=1, name="Test League", country="Testland"))
+    db_session.add(
+        models.Fixture(
+            id=1,
+            league_id=1,
+            season=2024,
+            home_team_id=1,
+            away_team_id=2,
+            date=datetime(2024, 8, 1, 18, 0),
+            status="NS",  # Not started yet
+        )
+    )
+    db_session.add(
+        models.Fixture(
+            id=2,
+            league_id=1,
+            season=2024,
+            home_team_id=2,
+            away_team_id=1,
+            date=datetime(2024, 8, 10, 18, 0),
+            status="NS",  # Not started yet
+        )
+    )
+    db_session.add(
+        models.Fixture(
+            id=3,
+            league_id=1,
+            season=2024,
+            home_team_id=1,
+            away_team_id=3,
+            date=datetime(2024, 8, 20, 18, 0),
+            status="FT",  # Finished
+            home_goals=1,
+            away_goals=1,
+        )
+    )
+    db_session.add(
+        models.Fixture(
+            id=4,
+            league_id=1,
+            season=2024,
+            home_team_id=2,
+            away_team_id=3,
+            date=datetime(2024, 8, 15, 18, 0),
+            status="NS",  # Not started yet
+        )
+    )
+    db_session.commit()
+
+    # Act
+    response = client.get("/teams/1/future-matches")
+
+    # Assert: should return the next 2 future matches for Team A
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert data[0]["id"] == 1
+    assert data[1]["id"] == 2
+    assert data[0]["home_team"]["name"] == "Team A"
+    assert data[1]["away_team"]["name"] == "Team A"
+
+
+def test_search_teams(client, db_session):
+    """GET /teams?search=... returns teams whose name contains the search phrase."""
+
+    # Arrange
+    db_session.add(models.Team(id=1, name="Manchester United", country="England"))
+    db_session.add(models.Team(id=2, name="Manchester City", country="England"))
+    db_session.add(models.Team(id=3, name="Liverpool", country="England"))
+    db_session.commit()
+
+    # Act: search for "ester" (case-insensitive)
+    response = client.get("/teams?search=eSTEr")
+
+    # Assert: should return the two Manchester teams
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert data[0]["name"] == "Manchester City"
+    assert data[1]["name"] == "Manchester United"
+
+    # Act: search for "Bayern" (not in DB)
+    response = client.get("/teams?search=Bayern")
+
+    # Assert: should return an empty list
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 0
+
+
+def test_team_not_found(client):
+    """Both team-match endpoints return 404 for a non-existent team."""
+    response = client.get("/teams/999999/past-matches")
+    assert response.status_code == 404
+    # future-matches: same guard, second function
+    response = client.get("/teams/999999/future-matches")
+    assert response.status_code == 404

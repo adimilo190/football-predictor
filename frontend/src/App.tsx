@@ -2,6 +2,8 @@ import { Route, Routes, Link } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LeaguePage from "./pages/LeaguePage";
 import BracketPage from "./pages/BracketPage";
+import SearchPage from "./pages/SearchPage";
+import TeamPage from "./pages/TeamPage";
 function App() {
   return (
     <>
@@ -14,6 +16,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/leagues/:id" element={<LeaguePage />} />
         <Route path="/bracket/:id" element={<BracketPage />} />
+        <Route path="/teams" element={<SearchPage />} />
+        <Route path="/teams/:id" element={<TeamPage />} />
       </Routes>
     </>
   );

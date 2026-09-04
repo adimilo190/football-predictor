@@ -26,7 +26,7 @@ function MatchupCard({ matchup }: MatchupCardProps) {
   const bottomAggregate = isTwoLeg ? sumGoals((leg) => leg.bottomGoals) : null;
 
   return (
-    <div className="border rounded p-1.5 text-sm flex flex-col gap-1">
+    <div className="bg-gray-800 border border-gray-700 rounded p-1.5 text-sm flex flex-col gap-1">
       {/* Column headers — only when there are two legs to label. */}
       {isTwoLeg && (
         <div className="flex items-center justify-end gap-1 text-xs text-gray-400">
@@ -78,7 +78,7 @@ function TeamRow({ team, goals, aggregate }: TeamRowProps) {
         {goals.map((legGoals, i) => (
           <span
             key={i}
-            className="bg-gray-100 rounded px-1 min-w-5 text-center"
+            className="bg-gray-700 rounded px-1 min-w-5 text-center"
           >
             {legGoals ?? "-"}
           </span>

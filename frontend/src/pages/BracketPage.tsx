@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getSeasons } from "../api/standings";
 
 function BracketPage() {
-
   const { id } = useParams();
 
   const [season, setSeason] = useState(2026);

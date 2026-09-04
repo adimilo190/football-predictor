@@ -13,7 +13,7 @@
 | 6 lip   | Repo na GitHubie, sekrety w `.env`, backend uporządkowany  | [x]    |
 | 20 lip  | **Faza 1 backend**: tabele lig + puchary w bazie i API     | [x]    |
 | 10 sie  | **Faza 1 komplet**: UI tabel i drabinek działa             | [x]    |
-| 24 sie  | **Faza 2 komplet**: ulubione drużyny + dashboard           | [ ]    |
+| 24 sie  | **Faza 2**: wyszukiwarka drużyn + podgląd meczów (bez ulubionych — zawężony MVP) | [~] |
 | 7 wrz   | **Faza 3 komplet**: predictor (model Poissona)             | [ ]    |
 | 14 wrz  | **Faza 4 komplet**: symulator meczów i lig                 | [ ]    |
 | 28 wrz  | **Faza 5 komplet**: model ML + porównanie z Poissonem      | [ ]    |
@@ -171,6 +171,14 @@
 > `GET /teams/{id}/future-matches` (zaplanowane, `NS`+`asc`), `GET /teams?search=`
 > (`ilike`). Domknięty też dług testowy `/seasons` z S14 (pytest 8/8). Dalej:
 > frontend Fazy 2 (wyszukiwarka + ulubione w `localStorage`) + testy nowych endpointów.
+>
+> **Postęp (4 wrz, Sesja 16):** „Frontend Fazy 2" **zrobione** (log `session-16.md`), ale
+> w **zawężonym zakresie**: właściciel zrezygnował z „ulubionych" (`localStorage`,
+> `useFavorites`, dashboard). Feature = **wyszukiwarka drużyn + podgląd ich meczów**.
+> Zrobione: testy 3 endpointów (pytest 8→12), `api/teams.ts`, hook `useDebounce`,
+> `SearchPage` (debounce + `useQuery`), `TeamPage` (dwie kolumny past/future + reużyty
+> `MatchupCard`), klikalne wyniki (`Link`) + wejście z HomePage. Bonus: **wymuszony ciemny
+> motyw** dla wszystkich. Dalej: close-out Fazy 2 (dark-polish + domyślny sezon) → Faza 3.
 
 ### Sesja 13 — [x] Backend: wyniki i terminarz drużyn — ZROBIONE w Sesji 15 (log `sessions/session-15.md`)
 - [x] Import fixtures ligowych (przeszłe + przyszłe kolejki) — rozszerzony `POST /import-fixtures` (ligi + puchary + europejskie)
@@ -179,15 +187,21 @@
 
 **Czego się uczysz:** parametry zapytań, filtrowanie i sortowanie w SQLAlchemy, indeksy.
 
-### Sesja 14 — [ ] Frontend: wybór ulubionych
-- [ ] Wyszukiwarka drużyn + dodawanie/usuwanie ulubionych
-- [ ] Zapis w `localStorage` (bez logowania — świadoma decyzja MVP; konta = stretch goal)
+### Sesja 14 — [x] Frontend: wyszukiwarka + podgląd meczów — ZROBIONE w Sesji 16 (log `session-16.md`)
+> **Zakres zawężony (S16):** bez „ulubionych" (`localStorage`/`useFavorites`/dashboard) —
+> świadoma decyzja właściciela. Feature = wyszukiwarka drużyn + podgląd ich meczów.
+- [x] Wyszukiwarka drużyn (`SearchPage`: kontrolowany input + **debounce** + `useQuery`)
+- [x] Klikalny wynik → strona drużyny `/teams/:id` (`TeamPage`: past/future w dwóch kolumnach)
+- [~] ~~Ulubione + `localStorage`~~ — **wycięte z zakresu** (zamiast tego: wejście „Find team" z HomePage)
 
-**Czego się uczysz:** localStorage, formularze kontrolowane, custom hook (`useFavorites`).
+**Czego się uczysz:** formularze kontrolowane, custom hook (`useDebounce`), debounce, `Link`, reuse komponentu.
 
-### Sesja 15 — [ ] Dashboard "Moje drużyny" ✦ KAMIEŃ MILOWY (24 sie)
-- [ ] Widok: ostatnie wyniki + nadchodzące mecze ulubionych drużyn
-- [ ] Tydzień 8 ma zapas — nadganiamy ewentualne zaległości
+### Sesja 15 — [~] „Moje drużyny" ✦ KAMIEŃ MILOWY (24 sie) — ZASTĄPIONE podglądem drużyny (S16)
+> Dashboard ulubionych **wycięty** (brak „ulubionych"). Jego rolę pełni `TeamPage`: po
+> wyszukaniu drużyny widać jej ostatnie wyniki + najbliższe mecze. Rdzeń Fazy 2 gotowy;
+> **close-out** (dark-polish komponentów + domyślny sezon = najnowszy) w Sesji 17.
+- [x] Widok: ostatnie wyniki + nadchodzące mecze drużyny (`TeamPage`)
+- [ ] Close-out (S17): dark-polish komponentów + dług UX (domyślny sezon `seasons[0]`)
 
 ---
 
