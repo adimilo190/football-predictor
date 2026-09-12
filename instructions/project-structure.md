@@ -3,7 +3,7 @@
 > Streszczenie całego projektu w jednym miejscu: co jest w każdym pliku/folderze i po co.
 > **Ten plik aktualizujemy przy każdej zmianie struktury** (nowy plik/folder = nowy wpis tutaj) —
 > to stały punkt rytuału końca sesji.
-> Stan na: Sesja 16 (2026-09-04).
+> Stan na: Sesja 17 (2026-09-12).
 
 ---
 
@@ -39,10 +39,12 @@ Pakiet Pythona (`__init__.py`). Warstwy od spodu do góry:
 | `config.py` | **Jedno źródło konfiguracji.** Klasa `Settings` (pydantic-settings) wczytuje `.env`, waliduje, krzyczy na starcie, jeśli czegoś brak. Reszta kodu: `from app.config import settings` |
 | `database.py` | **Połączenie z PostgreSQL**: `engine`, `SessionLocal` (fabryka sesji), `Base` (klasa bazowa modeli) + zależność `get_db` (jedna sesja na request; tu, by uniknąć cyklu importów) |
 | `models.py` | **Modele SQLAlchemy = tabele**: `League` (rozgrywki), `Team` (drużyna — bez ligi, bo gra w wielu), `Standing` (wiersz tabeli: liga+drużyna+sezon+statystyki), `Fixture` (mecz: **dwa** FK do `teams` — home/away, wynik, data, runda, status) |
-| `schemas.py` | **Schematy Pydantic = kontrakt API** (co wychodzi na zewnątrz): `LeagueResponse`, `TeamResponse`, `StandingResponse` (zagnieżdżona drużyna), `FixtureResponse` (dwie drużyny, gole nullable), `BracketRound` (runda + lista meczów; budowany ręcznie) |
+| `schemas.py` | **Schematy Pydantic = kontrakt API** (co wychodzi na zewnątrz): `LeagueResponse`, `TeamResponse`, `StandingResponse` (zagnieżdżona drużyna), `FixtureResponse` (dwie drużyny, gole nullable), `BracketRound` (runda + lista meczów; budowany ręcznie), `PredictionResponse`+`ScoreLine` (wynik predykcji: P(1/X/2) + top wyniki; wartości liczone, bez `from_attributes`) |
 | `constants.py` | **Stałe biznesowe**: `TARGET_LEAGUE_IDS` (**15** rozgrywek = `DOMESTIC_LEAGUE_IDS` + `DOMESTIC_CUP_IDS` + `EUROPEAN_COMPETITION_IDS` z LM/LE/Konf), `DEFAULT_SEASON = 2024`, `KNOCKOUT_ROUNDS` (nazwy rund pucharowych dla filtra `knockout_only`), `FINISHED_STATUSES` (`{FT, AET, PEN}` — statusy meczu rozegranego, dla `past-matches`) |
 | `main.py` | **Cienki punkt wejścia** (~30 linii): tworzy `FastAPI`, konfiguruje **CORS** (origin `:5173`), rejestruje routery. Endpointy żyją w `routers/`. Dokumentacja: `/docs` (Swagger UI) |
 | `routers/` | **Endpointy podzielone na moduły** — szczegóły niżej |
+| `constants.py` (+`HOME_ADVANTAGE`) | Doszła stała `HOME_ADVANTAGE = 1.3` (mnożnik przewagi boiska dla predyktora Poissona) |
+| `prediction/` | **Model predykcji (Poisson)** — czysta logika, niezależna od API — szczegóły niżej |
 
 **Przepływ danych:** `.env` → `config.py` → `database.py` → `models.py` → (`schemas.py` +) `routers/` ← `main.py`.
 
@@ -54,6 +56,17 @@ Pakiet Pythona (`__init__.py`). Warstwy od spodu do góry:
 | `competitions.py` | **Odczyty (READ)**: `GET /leagues`, `GET /leagues/{id}/standings` (sort po `rank`, `joinedload` przeciw N+1), `GET /leagues/{id}/fixtures` (płaska lista), `GET /leagues/{id}/bracket` (grupowanie rundami + filtr `knockout_only`), `GET /leagues/{id}/seasons` (**dostępne sezony** — `UNION` sezonów ze `standings` (ligi) i `fixtures` (puchary), pod selektor tabel **i** drabinek). Helper `query_fixtures` (DRY) |
 | `imports.py` | **Zapisy / ETL (WRITE)**: `POST /import-leagues`, `POST /import-standings`, `POST /import-fixtures` (ligi + puchary + europejskie = `TARGET_LEAGUE_IDS`) + funkcje `fetch_*` (Extract z API-Football) i `upsert_*` (Transform+Load). Obsługa limitów i błędów HTTP |
 | `teams.py` | **Odczyty o drużynach (READ)**: `GET /teams/{id}/past-matches` (ostatnie rozegrane — `or_` home/away + `FINISHED_STATUSES` + `date desc` + `limit`), `GET /teams/{id}/future-matches` (najbliższe zaplanowane — `status NS` + `date asc`), `GET /teams?search=` (wyszukiwarka — `name.ilike("%…%")`, `limit 20`). Mecze/wyniki **cross-competition** (forma drużyny niezależnie od rozgrywki) |
+| `predictions.py` | **Predykcja (READ)**: `GET /predict` (2 drużyny w ramach jednej ligi → `PredictionResponse`: P(1/X/2) + top 5 wyników). Walidacja 404 (drużyny muszą mieć `standings`), `float()` pod JSON. Woła `prediction/strength.py` (λ) → `prediction/poisson.py` (matematyka) |
+
+### `app/prediction/` — model predykcji (Poisson)
+
+Osobny pakiet: **czysta logika predykcji**. Warstwy: `strength.py` (dane→λ, czyta bazę) → `poisson.py` (λ→prawdopodobieństwa, zero DB). Endpoint `routers/predictions.py` je spina.
+
+| Plik | Co robi |
+|---|---|
+| `__init__.py` | Robi z `prediction/` pakiet |
+| `poisson.py` | **Czysta matematyka** (bez DB): `poisson_pmf` (`λ^k·e^-λ/k!`), `goal_distribution` (wektor P(0..max)), `score_matrix` (`np.outer` dwóch rozkładów + normalizacja), `match_outcome_probabilities` (`np.tril(-1)`/`trace`/`triu(1)` → P(1/X/2)), `top_scorelines` (n najbardziej prawdopodobnych wyników) |
+| `strength.py` | **λ z danych** (`standings`): `league_baseline` (średnia goli/mecz w lidze = baza), `team_attack_defence` (siła ataku/obrony względem bazy), `match_lambdas` (składa λ_home/λ_away + `HOME_ADVANTAGE`). Predyktor **within-league** (siła jest względna do ligi) |
 
 ---
 
@@ -88,6 +101,7 @@ Aplikacja SPA (single-page). Uruchomienie: `npm run dev` (w WSL, Node przez `nvm
 | `api/bracket.ts` | **Warstwa API (drabinki)**: typy `Fixture`/`BracketRound` + `getBracket(leagueId, season, knockoutOnly)`; oraz `Matchup` + `groupIntoMatchups` (grupowanie dwumeczów w pary pod drzewko) |
 | `api/teams.ts` | **Warstwa API (drużyny)**: `searchTeams(search)` (`?search=` + `encodeURIComponent`), `getPastMatches(id)`, `getFutureMatches(id)` — reuse typów `Team`/`Fixture` przez `import type`. Wołane jako `queryFn` |
 | `hooks/useDebounce.ts` | **Custom hook** `useDebounce<T>(value, delayMs)`: opóźniona kopia wartości (`useState` + `useEffect` + `setTimeout` + cleanup `clearTimeout`). Używany przez `SearchPage` — fetch po ustaniu pisania, nie po każdym znaku |
+| `hooks/useSeasonSelector.ts` | **Custom hook** `useSeasonSelector(id)`: lista sezonów (`useQuery`) + wybór usera (`useState`) + efektywny sezon (`selectedSeason ?? seasons[0]` = **derived state**, domyślnie najnowszy). Reuse w `LeaguePage`+`BracketPage` |
 | `components/LeagueTable.tsx` | Tabela ligowa: prop `season`; `useQuery(["standings", leagueId, season], getStandings)` (**sezon w kluczu** = cache per sezon) → `data`/`isLoading`/`isError`, render `<table>` |
 | `components/Bracket.tsx` | Drabinka: `useQuery(["bracket", leagueId], getBracket)` + **drzewko turniejowe** (kolumny rund `flex`+`items-stretch`+`justify-around`, `overflow-x-auto`); grupuje mecze przez `groupIntoMatchups`, renderuje `MatchupCard` |
 | `components/MatchupCard.tsx` | Karta pary: dwie drużyny (herb + nazwa) + wyniki legów w pudełkach; dla dwumeczu nagłówki `1/2/Σ` i wynik zsumowany (agregat); wiersz **dat/godzin** meczów (helper `formatDate`, `toLocaleString`). **Reużyty też w `TeamPage`** (pojedynczy mecz = dwumecz z jedną nogą, przez adapter `fixtureToMatchup`). Style pod ciemny motyw (`bg-gray-800` karta, `bg-gray-700` pudełka) |
@@ -109,7 +123,8 @@ Aplikacja SPA (single-page). Uruchomienie: `npm run dev` (w WSL, Node przez `nvm
 |---|---|
 | `__init__.py` | Robi z `tests/` pakiet (pytest dokłada katalog projektu do `sys.path`) |
 | `conftest.py` | **Infrastruktura testowa**: izolowana baza **SQLite in-memory** (`StaticPool`), podmiana `get_db` przez `app.dependency_overrides`, autouse fixture czyszcząca bazę per test, fixtures `client`/`db_session` |
-| `test_main.py` | **12 testów** endpointów (Arrange–Act–Assert, własny seed): `/`, `/leagues`, `/standings`, `/fixtures`, `/bracket` (wszystkie rundy + dowód sortu, oraz filtr `knockout_only`), `/seasons` (`UNION` standings+fixtures + dedup + sort), `/teams/{id}/past-matches` (scenariusz szczelny `or_`/status/sort), `/teams/{id}/future-matches` (`NS`+`asc`), `/teams?search=` (`ilike` substring + case-insensitive + `order_by` + pusty wynik), błędne id → 404 (standings + drużyna) |
+| `test_main.py` | **14 testów** endpointów (Arrange–Act–Assert, własny seed): `/`, `/leagues`, `/standings`, `/fixtures`, `/bracket` (wszystkie rundy + dowód sortu, oraz filtr `knockout_only`), `/seasons` (`UNION` standings+fixtures + dedup + sort), `/teams/{id}/past-matches` (scenariusz szczelny `or_`/status/sort), `/teams/{id}/future-matches` (`NS`+`asc`), `/teams?search=` (`ilike` substring + case-insensitive + `order_by` + pusty wynik), błędne id → 404 (standings + drużyna), `/predict` (P(1/X/2) sumują ≈1 + top 5) i 404 dla drużyny spoza ligi |
+| `test_poisson.py` | **5 testów** czystej matematyki Poissona (bez DB, known-values): `poisson_pmf`, `goal_distribution` (suma≈1), `score_matrix` (kształt + komórka 1:0), `match_outcome_probabilities` (61/21/18), `top_scorelines` (sort). Razem z `test_main.py`: **pytest 19/19** |
 
 **Uruchomienie:** `venv/bin/pytest -v` (w WSL). Testy nie ruszają prawdziwej bazy ani API-Football.
 

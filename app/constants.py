@@ -62,3 +62,9 @@ KNOCKOUT_ROUNDS: set[str] = {
 # after extra time (AET), penalties (PEN). The team results endpoint filters on
 # these to keep out scheduled, postponed, cancelled or in-progress matches.
 FINISHED_STATUSES: set[str] = {"FT", "AET", "PEN"}
+
+# Home advantage multiplier for the Poisson predictor (Phase 3). Teams score more
+# at home, but standings don't split home/away goals, so we apply a flat boost to
+# the home team's expected goals. ~1.3 is a common empirical value. This is a
+# beta simplification; the "improved" model will derive it from fixtures later.
+HOME_ADVANTAGE: float = 1.3

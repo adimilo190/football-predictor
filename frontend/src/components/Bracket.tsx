@@ -16,6 +16,7 @@ function Bracket({ leagueId, season }: BracketProps) {
   if (isLoading) return <p>Loading...</p>;
   if (isError) return <p>Failed to load bracket</p>;
   if (!data) return null;
+  if (data.length === 0) return <p>No knockout stage for this season yet</p>;
   return (
     <div className="flex gap-2 overflow-x-auto p-2 items-stretch">
       {data.map((round) => (

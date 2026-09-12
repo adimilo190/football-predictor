@@ -26,10 +26,10 @@ function MatchupCard({ matchup }: MatchupCardProps) {
   const bottomAggregate = isTwoLeg ? sumGoals((leg) => leg.bottomGoals) : null;
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded p-1.5 text-sm flex flex-col gap-1">
+    <div className="group bg-gray-800 border border-gray-700 rounded p-1.5 text-sm flex flex-col gap-1 transition-colors hover:text-white hover:border-white">
       {/* Column headers — only when there are two legs to label. */}
       {isTwoLeg && (
-        <div className="flex items-center justify-end gap-1 text-xs text-gray-400">
+        <div className="flex items-center justify-end gap-1 text-xs text-gray-400 transition-colors group-hover:text-white">
           {matchup.legs.map((_, i) => (
             <span key={i} className="min-w-5 text-center">
               {i + 1}
@@ -48,7 +48,7 @@ function MatchupCard({ matchup }: MatchupCardProps) {
         goals={matchup.legs.map((leg) => leg.bottomGoals)}
         aggregate={bottomAggregate}
       />
-      <div className="text-xs text-gray-400 text-right">
+      <div className="text-xs text-gray-400 text-right transition-colors group-hover:text-white">
         {matchup.legs.map((leg) => formatDate(leg.date)).join(" / ")}
       </div>
     </div>
@@ -84,7 +84,7 @@ function TeamRow({ team, goals, aggregate }: TeamRowProps) {
           </span>
         ))}
         {aggregate !== null && (
-          <span className="bg-gray-800 text-white rounded px-1 min-w-5 text-center">
+          <span className="bg-gray-800 text-white rounded px-1 min-w-5 text-center transition-colors group-hover:text-yellow-400">
             {aggregate}
           </span>
         )}

@@ -29,6 +29,8 @@ function SearchPage() {
     results = <p className="mt-2">Searching...</p>;
   } else if (isError) {
     results = <p className="mt-2 text-red-600">Search failed</p>;
+  } else if (teams?.length === 0) {
+    results = <p className="mt-2">Unknown team</p>;
   } else {
     results = (
       <ul className="mt-2">

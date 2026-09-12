@@ -13,8 +13,8 @@
 | 6 lip   | Repo na GitHubie, sekrety w `.env`, backend uporządkowany  | [x]    |
 | 20 lip  | **Faza 1 backend**: tabele lig + puchary w bazie i API     | [x]    |
 | 10 sie  | **Faza 1 komplet**: UI tabel i drabinek działa             | [x]    |
-| 24 sie  | **Faza 2**: wyszukiwarka drużyn + podgląd meczów (bez ulubionych — zawężony MVP) | [~] |
-| 7 wrz   | **Faza 3 komplet**: predictor (model Poissona)             | [ ]    |
+| 24 sie  | **Faza 2**: wyszukiwarka drużyn + podgląd meczów (bez ulubionych — zawężony MVP) | [x] |
+| 7 wrz   | **Faza 3 komplet**: predictor (model Poissona)             | [~]    |
 | 14 wrz  | **Faza 4 komplet**: symulator meczów i lig                 | [ ]    |
 | 28 wrz  | **Faza 5 komplet**: model ML + porównanie z Poissonem      | [ ]    |
 | 30 wrz  | README, CI, szlify — **projekt gotowy do CV**              | [ ]    |
@@ -179,6 +179,18 @@
 > `SearchPage` (debounce + `useQuery`), `TeamPage` (dwie kolumny past/future + reużyty
 > `MatchupCard`), klikalne wyniki (`Link`) + wejście z HomePage. Bonus: **wymuszony ciemny
 > motyw** dla wszystkich. Dalej: close-out Fazy 2 (dark-polish + domyślny sezon) → Faza 3.
+>
+> **Postęp (12 wrz, Sesja 17):** Close-out Fazy 2 **domknięty** + **START Fazy 3
+> — backend Poissona KOMPLETNY** (log `session-17.md`). Faza 2: dark-polish
+> (`LeagueTable`, hover `MatchupCard`), wspólny hook `useSeasonSelector` (domyślny
+> sezon = najnowszy, wzorzec derived state), empty states (`Bracket`, `SearchPage`).
+> Faza 3: cała teoria Poissona + `app/prediction/poisson.py` (czysta matematyka) +
+> `strength.py` (λ z `standings`) + endpoint `GET /predict` + testy (pytest 12→19).
+> **Decyzje**: plan **3 modeli** (bazowy Poisson → ulepszony Dixon-Coles → ML),
+> źródło **standings**, predyktor **within-league**, `GET` zamiast `POST`. **NOWY
+> CEL/harmonogram**: beta z predyktorem do 13 wrz (UI), **deploy publiczny + README
+> + CV po powrocie ~26 wrz** — priorytet MVP na deploy PRZED Fazą 4/5 ("wystaw
+> wcześnie, ulepszaj publicznie"). Dalej (S18): **UI predyktora** (sprint).
 
 ### Sesja 13 — [x] Backend: wyniki i terminarz drużyn — ZROBIONE w Sesji 15 (log `sessions/session-15.md`)
 - [x] Import fixtures ligowych (przeszłe + przyszłe kolejki) — rozszerzony `POST /import-fixtures` (ligi + puchary + europejskie)
@@ -201,21 +213,22 @@
 > wyszukaniu drużyny widać jej ostatnie wyniki + najbliższe mecze. Rdzeń Fazy 2 gotowy;
 > **close-out** (dark-polish komponentów + domyślny sezon = najnowszy) w Sesji 17.
 - [x] Widok: ostatnie wyniki + nadchodzące mecze drużyny (`TeamPage`)
-- [ ] Close-out (S17): dark-polish komponentów + dług UX (domyślny sezon `seasons[0]`)
+- [x] Close-out (S17): dark-polish komponentów + dług UX (domyślny sezon `seasons[0]`, hook `useSeasonSelector`) + empty states (`Bracket`, `SearchPage`)
 
 ---
 
 ## BLOK 4 — Faza 3: Predictor (tygodnie 9–10: 25 sie – 7 wrz)
 
-### Sesja 16 — [ ] Model Poissona (serce projektu!)
-- [ ] Teoria (na spokojnie, krok po kroku): siła ataku/obrony drużyny liczona z historycznych wyników → oczekiwane gole λ (lambda) → rozkład Poissona → macierz prawdopodobieństw wszystkich wyników → suma = P(wygrana/remis/porażka)
-- [ ] Implementacja w czystym Pythonie/numpy jako osobny moduł `app/prediction/poisson.py` (niezależny od API!)
+### Sesja 16 — [x] Model Poissona (serce projektu!) — ZROBIONE w Sesji 17 (log `sessions/session-17.md`)
+- [x] Teoria (krok po kroku): siła ataku/obrony (względem bazy ligowej) → λ → rozkład Poissona → macierz (np.outer) → trójkąty = P(1/X/2)
+- [x] Implementacja w czystym Pythonie/numpy: `app/prediction/poisson.py` (matematyka) + `strength.py` (λ z `standings`, niezależne od API)
+- [x] (nadprogram) **3 modele w planie**: #1 bazowy Poisson (ten) → #2 ulepszony (Dixon-Coles) → #3 ML; predyktor **within-league**
 
 **Czego się uczysz:** jak działa realny model statystyczny bukmacherów, numpy, separacja logiki biznesowej od warstwy API.
 
-### Sesja 17 — [ ] Endpoint predykcji + testy
-- [ ] `POST /predict` (dowolne 2 drużyny) → { P(1), P(X), P(2), top 5 wyników }
-- [ ] Testy jednostkowe algorytmu (znane dane → oczekiwane wyniki)
+### Sesja 17 — [x] Endpoint predykcji + testy — ZROBIONE w Sesji 17 (log `sessions/session-17.md`)
+- [x] `GET /predict` (2 drużyny w ramach jednej ligi) → { P(1), P(X), P(2), top 5 wyników } — GET, nie POST (czysty odczyt/obliczenie)
+- [x] Testy: `tests/test_poisson.py` (5, known-values: λ 1,96/0,95 → 61/21/18) + 2 testy `/predict` (pytest 12→19)
 
 ### Sesja 18 — [ ] UI predictora ✦ KAMIEŃ MILOWY (7 wrz)
 - [ ] Wybór 2 drużyn (selecty z wyszukiwarką)

@@ -87,3 +87,23 @@ class BracketRound(BaseModel):
 
     round: str
     fixtures: list[FixtureResponse]
+
+
+class ScoreLine(BaseModel):
+    """A single scoreline (e.g. 2:1) and how likely it is."""
+
+    home_goals: int
+    away_goals: int
+    probability: float
+
+
+class PredictionResponse(BaseModel):
+    """Poisson prediction for a match: 1/X/2 plus the most likely scorelines.
+
+    These are computed values (not read from a table), so no from_attributes.
+    """
+
+    home_win: float
+    draw: float
+    away_win: float
+    top_scores: list[ScoreLine]

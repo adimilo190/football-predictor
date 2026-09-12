@@ -5,6 +5,8 @@
 # so every test that reads data must first arrange the data it expects.
 from datetime import datetime
 
+import pytest
+
 from app import models
 
 
@@ -430,4 +432,73 @@ def test_team_not_found(client):
     assert response.status_code == 404
     # future-matches: same guard, second function
     response = client.get("/teams/999999/future-matches")
+    assert response.status_code == 404
+
+
+def test_predict_returns_probabilities(client, db_session):
+    """GET /predict returns 1/X/2 (summing to ~1) plus the top scorelines."""
+    # Arrange: a league with two teams and their standings (the strength source).
+    # Strong FC scores a lot and concedes little; Weak FC is the opposite.
+    db_session.add(models.League(id=1, name="Test League", country="Testland"))
+    db_session.add(models.Team(id=10, name="Strong FC", country="Testland"))
+    db_session.add(models.Team(id=20, name="Weak FC", country="Testland"))
+    db_session.add(
+        models.Standing(
+            league_id=1,
+            team_id=10,
+            season=2024,
+            played=20,
+            goals_for=40,
+            goals_against=20,
+        )
+    )
+    db_session.add(
+        models.Standing(
+            league_id=1,
+            team_id=20,
+            season=2024,
+            played=20,
+            goals_for=20,
+            goals_against=40,
+        )
+    )
+    db_session.commit()
+
+    # Act
+    response = client.get(
+        "/predict",
+        params={"home_id": 10, "away_id": 20, "league_id": 1, "season": 2024},
+    )
+
+    # Assert: valid probability split, strong home team favoured, five scorelines.
+    assert response.status_code == 200
+    data = response.json()
+    total = data["home_win"] + data["draw"] + data["away_win"]
+    assert total == pytest.approx(1.0, abs=1e-4)
+    assert data["home_win"] > data["away_win"]
+    assert len(data["top_scores"]) == 5
+    assert "home_goals" in data["top_scores"][0]
+    assert "probability" in data["top_scores"][0]
+
+
+def test_predict_unknown_team_returns_404(client, db_session):
+    """A team without standings in the league/season yields 404, not a crash."""
+    db_session.add(models.League(id=1, name="Test League", country="Testland"))
+    db_session.add(models.Team(id=10, name="Strong FC", country="Testland"))
+    db_session.add(
+        models.Standing(
+            league_id=1,
+            team_id=10,
+            season=2024,
+            played=20,
+            goals_for=40,
+            goals_against=20,
+        )
+    )
+    db_session.commit()
+
+    response = client.get(
+        "/predict",
+        params={"home_id": 10, "away_id": 99999, "league_id": 1, "season": 2024},
+    )
     assert response.status_code == 404
