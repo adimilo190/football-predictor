@@ -14,7 +14,7 @@
 | 20 lip  | **Faza 1 backend**: tabele lig + puchary w bazie i API     | [x]    |
 | 10 sie  | **Faza 1 komplet**: UI tabel i drabinek działa             | [x]    |
 | 24 sie  | **Faza 2**: wyszukiwarka drużyn + podgląd meczów (bez ulubionych — zawężony MVP) | [x] |
-| 7 wrz   | **Faza 3 komplet**: predictor (model Poissona)             | [~]    |
+| 7 wrz   | **Faza 3 komplet**: predictor (model Poissona)             | [x]    |
 | 14 wrz  | **Faza 4 komplet**: symulator meczów i lig                 | [ ]    |
 | 28 wrz  | **Faza 5 komplet**: model ML + porównanie z Poissonem      | [ ]    |
 | 30 wrz  | README, CI, szlify — **projekt gotowy do CV**              | [ ]    |
@@ -219,6 +219,18 @@
 
 ## BLOK 4 — Faza 3: Predictor (tygodnie 9–10: 25 sie – 7 wrz)
 
+> **Postęp (13 wrz, Sesja 18):** Faza 3 **KOMPLETNA** — UI predyktora gotowe
+> (log `session-18.md`). Cała ścieżka: `api/predictions.ts` (`getPrediction`) →
+> `PredictPage` (wybór ligi → 2 drużyny, `useQuery`+`enabled`) → `PredictionResult`
+> (paski 1/X/2 + top wyniki). Predyktor **within-league**, na żywo lokalnie.
+> **Decyzje**: sezon predykcji = stała (ostatni **pełny** sezon — bieżący we
+> wrześniu za cienki, ~5 kolejek → zaszumione siły), bez selektora sezonu.
+> **Feature modelu #2 (Dixon-Coles)**: uśrednianie danych z wielu sezonów
+> (średnia ważona ostatniego + bieżącego = wagi czasowe) — pomysł właściciela,
+> odłożony za baseline ("najpierw baseline, potem MIERZONE ulepszenia").
+> **Nowy priorytet (S17)**: Dalej (S19, po powrocie ~26 wrz) = **deploy publiczny
+> + README (CV) PRZED Fazą 4/5** — „wystaw wcześnie, ulepszaj publicznie".
+
 ### Sesja 16 — [x] Model Poissona (serce projektu!) — ZROBIONE w Sesji 17 (log `sessions/session-17.md`)
 - [x] Teoria (krok po kroku): siła ataku/obrony (względem bazy ligowej) → λ → rozkład Poissona → macierz (np.outer) → trójkąty = P(1/X/2)
 - [x] Implementacja w czystym Pythonie/numpy: `app/prediction/poisson.py` (matematyka) + `strength.py` (λ z `standings`, niezależne od API)
@@ -230,9 +242,10 @@
 - [x] `GET /predict` (2 drużyny w ramach jednej ligi) → { P(1), P(X), P(2), top 5 wyników } — GET, nie POST (czysty odczyt/obliczenie)
 - [x] Testy: `tests/test_poisson.py` (5, known-values: λ 1,96/0,95 → 61/21/18) + 2 testy `/predict` (pytest 12→19)
 
-### Sesja 18 — [ ] UI predictora ✦ KAMIEŃ MILOWY (7 wrz)
-- [ ] Wybór 2 drużyn (selecty z wyszukiwarką)
-- [ ] Wizualizacja: paski procentowe 1/X/2 + najbardziej prawdopodobne wyniki
+### Sesja 18 — [x] UI predictora ✦ KAMIEŃ MILOWY (7 wrz) — ZROBIONE 13 wrz (log `sessions/session-18.md`)
+- [x] Wybór ligi → 2 drużyny z tej ligi (kontrolowane `<select>`, within-league; drużyny z `getStandings`)
+- [x] Wizualizacja: paski procentowe 1/X/2 + najbardziej prawdopodobne wyniki (`components/PredictionResult.tsx`, `OutcomeBar`)
+- [x] (dodatkowo) warstwa API `api/predictions.ts` (`getPrediction`), trasa `/predict` + wejście z HomePage; sezon = stała (ostatni pełny sezon), bez selektora
 
 ---
 

@@ -6,6 +6,12 @@ function HomePage() {
     <>
       <div className="max-w-2xl mx-auto p-4 flex flex-col gap-2">
         <Link
+          to="/predict"
+          className="border rounded-lg p-3 font-semibold hover:text-white"
+        >
+          🔮 Predict match
+        </Link>
+        <Link
           to="/teams"
           className="border rounded-lg p-3 font-semibold hover:text-white"
         >

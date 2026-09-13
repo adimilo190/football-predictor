@@ -4,6 +4,7 @@ import LeaguePage from "./pages/LeaguePage";
 import BracketPage from "./pages/BracketPage";
 import SearchPage from "./pages/SearchPage";
 import TeamPage from "./pages/TeamPage";
+import PredictPage from "./pages/PredictPage";
 function App() {
   return (
     <>
@@ -18,6 +19,7 @@ function App() {
         <Route path="/bracket/:id" element={<BracketPage />} />
         <Route path="/teams" element={<SearchPage />} />
         <Route path="/teams/:id" element={<TeamPage />} />
+        <Route path="/predict" element={<PredictPage />} />
       </Routes>
     </>
   );
