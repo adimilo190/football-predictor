@@ -1,5 +1,14 @@
+// src/api/bracket.ts
+// API layer for cup competitions, in two parts:
+//   1. types + getBracket() - the rounds and matches as the backend sends them;
+//   2. groupIntoMatchups()  - reshaping those matches into the pairs a tournament
+//      tree needs (see the section comment further down).
+// The reshaping lives here rather than in the component because it is data work,
+// not rendering: the Bracket component only draws whatever comes out of it.
+
 import type { Team } from "./standings";
 import { API_BASE_URL } from "./config";
+
 export type Fixture = {
   id: number;
   round: string | null;

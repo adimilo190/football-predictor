@@ -1,3 +1,11 @@
+// src/components/PredictionResult.tsx
+// Visualises one prediction: three probability bars (home win / draw / away win)
+// and the most likely scorelines underneath.
+//
+// Presentation only - it fetches nothing and holds no state. Everything it draws
+// arrives as props from PredictPage, which keeps the "what to show" and the "how to
+// show it" decisions in separate files.
+
 import type { Prediction } from "../api/predictions";
 
 // One labelled probability bar. The track (gray) is full width; the fill's width
@@ -5,6 +13,9 @@ import type { Prediction } from "../api/predictions";
 // Tailwind class can't hold an arbitrary runtime width).
 type OutcomeBarProps = { label: string; probability: number; color: string };
 
+// The colour arrives as a COMPLETE class literal ("bg-emerald-500"), never built
+// from pieces: Tailwind scans the source as text, so `bg-${color}-500` would leave
+// no class for it to find and the bar would come out unpainted.
 function OutcomeBar({ label, probability, color }: OutcomeBarProps) {
   const percent = probability * 100;
   return (

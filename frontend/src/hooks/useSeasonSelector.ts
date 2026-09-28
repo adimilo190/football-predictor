@@ -1,3 +1,9 @@
+// src/hooks/useSeasonSelector.ts
+// Custom hook holding the season-picker logic that LeaguePage and BracketPage both
+// need: which seasons exist, which one the user chose, and which one is actually in
+// effect. Extracted so the two pages cannot drift apart - and so the "default to
+// the newest season" rule is written down exactly once.
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getSeasons } from "../api/standings";

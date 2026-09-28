@@ -1,3 +1,7 @@
+// src/components/LeagueTable.tsx
+// Renders one league table. It receives the league id and season as props and does
+// its own fetching, so any page can drop it in without wiring queries itself.
+
 import { useQuery } from "@tanstack/react-query";
 import { getStandings } from "../api/standings";
 
@@ -7,6 +11,8 @@ type LeagueTableProps = {
 };
 
 function LeagueTable({ leagueId, season }: LeagueTableProps) {
+  // The season is part of the queryKey, so each season is cached separately:
+  // switching back to a season already viewed shows it instantly, with no refetch.
   const { data, isLoading, isError } = useQuery({
     queryKey: ["standings", leagueId, season],
     queryFn: () => getStandings(leagueId, season),
@@ -48,7 +54,9 @@ function LeagueTable({ leagueId, season }: LeagueTableProps) {
             <td className="border border-gray-700 px-3 py-1">{s.draws}</td>
             <td className="border border-gray-700 px-3 py-1">{s.losses}</td>
             <td className="border border-gray-700 px-3 py-1">{s.goals_for}</td>
-            <td className="border border-gray-700 px-3 py-1">{s.goals_against}</td>
+            <td className="border border-gray-700 px-3 py-1">
+              {s.goals_against}
+            </td>
             <td className="border border-gray-700 px-3 py-1">{s.points}</td>
           </tr>
         ))}

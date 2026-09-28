@@ -1,3 +1,8 @@
+// src/hooks/useDebounce.ts
+// A custom hook - a plain function that calls other hooks and can be reused by any
+// component. This one solves the search box problem: typing "Barcelona" would fire
+// nine requests, one per letter. Debouncing waits for a pause in typing first.
+
 import { useEffect, useState } from "react";
 
 // Returns a delayed copy of `value` that only updates once `value` has stopped

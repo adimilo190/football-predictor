@@ -1,3 +1,12 @@
+// src/App.tsx
+// Layout + routing: the shared header (clickable title, always back to the home
+// page) sits above <Routes>, which swaps in one page component depending on the
+// URL. This is a single-page app - the router changes what renders without the
+// browser ever reloading the page.
+//
+// A path segment starting with ":" is a parameter; the page reads it with
+// useParams (e.g. "/leagues/39" -> id = "39").
+
 import { Route, Routes, Link } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LeaguePage from "./pages/LeaguePage";

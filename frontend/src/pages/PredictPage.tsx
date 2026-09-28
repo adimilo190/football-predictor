@@ -47,7 +47,8 @@ function PredictPage() {
     isError,
   } = useQuery({
     queryKey: ["prediction", leagueId, homeId, awayId, PREDICTION_SEASON],
-    queryFn: () => getPrediction(homeId!, awayId!, leagueId!, PREDICTION_SEASON),
+    queryFn: () =>
+      getPrediction(homeId!, awayId!, leagueId!, PREDICTION_SEASON),
     enabled: homeId !== null && awayId !== null && homeId !== awayId,
   });
 

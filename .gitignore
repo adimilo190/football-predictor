@@ -5,10 +5,11 @@ __pycache__/
 *.pyo
 .pytest_cache/
 
-# === Sekrety - NIGDY nie commitujemy! ===
-# Plik .env zawiera hasła i klucze API. Na GitHubie ląduje tylko .env.example (wzór bez sekretów).
+# === Secrets - NEVER commit these! ===
+# .env holds passwords and API keys. Only .env.example (a template with no real
+# values) is allowed on GitHub.
 .env
-# Dodatkowe zabezpieczenie: typowe nazwy plików z sekretami/tokenami
+# Extra safety net: common filenames for secrets and tokens.
 .env.*
 !.env.example
 *.token
@@ -16,15 +17,15 @@ __pycache__/
 secrets.txt
 credentials.txt
 
-# === IDE / system ===
+# === IDE / OS ===
 .vscode/
 .idea/
 .DS_Store
 
-# === Claude Code - lokalne ustawienia uprawnień ===
+# === Claude Code - local permission settings ===
 .claude/settings.local.json
 
-# === Frontend (przyda się od Bloku 2) ===
+# === Frontend ===
 node_modules/
 dist/
 .eslintcache

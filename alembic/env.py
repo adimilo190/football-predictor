@@ -1,3 +1,12 @@
+# alembic/env.py
+# Alembic's entry point: every "alembic revision" and "alembic upgrade" command
+# runs this file first to learn how to reach the database and what our schema
+# should look like. Mostly Alembic's generated template, with two edits of our own:
+#   1. the database URL comes from app settings (.env), not from alembic.ini, so
+#      the password never lands in a file tracked by git;
+#   2. app.models is imported, so --autogenerate can compare our model classes
+#      against the live database and write the difference into a migration.
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config

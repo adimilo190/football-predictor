@@ -1,29 +1,33 @@
-# Założenia Projektu: Football Predictor & Tracker
+# Project Assumptions: Football Predictor & Tracker
 
-## Cel projektu
-Stworzenie kompleksowej aplikacji webowej do śledzenia rozgrywek piłkarskich z zaawansowanymi funkcjami przewidywania wyników i symulacji. Projekt ma stanowić kluczowy element portfolio (wizytówkę) do zdobycia stażu/pracy na stanowisku programisty.
+## Goal
+Build a complete web application for following football competitions, with advanced
+result-prediction and simulation features. The project is meant to be the centrepiece of
+a portfolio — the calling card for landing an internship or a developer job.
 
-## Fazy rozwoju i główne funkcjonalności
+## Development phases and main features
 
-### Faza 1: Baza informacyjna (Tabele i Drabinki)
-* Wyświetlanie aktualnych tabel dla 6 głównych lig: Angielska, Hiszpańska, Włoska, Niemiecka, Francuska, Portugalska.
-* Wyświetlanie drabinek pucharów krajowych dla tych lig.
-* Wyświetlanie drabinki Ligi Mistrzów.
+### Phase 1: Information base (tables and brackets)
+* Current league tables for 6 major leagues: England, Spain, Italy, Germany, France,
+  Portugal.
+* Domestic cup brackets for those countries.
+* The Champions League bracket.
 
-### Faza 2: Personalizacja (Ulubione Drużyny)
-* Możliwość wybrania ulubionych drużyn.
-* Śledzenie najnowszych wyników wybranych drużyn.
-* Przeglądanie terminarza (kilka najbliższych spotkań w przyszłości) dla ulubionych zespołów.
+### Phase 2: Personalisation (favourite teams)
+* Pick favourite teams.
+* Follow those teams' latest results.
+* Browse their schedule (the next few upcoming fixtures).
 
-### Faza 3: Podstawowy Predictor (Algorytm bazowy)
-* Narzędzie pozwalające wybrać dowolne 2 drużyny (np. Real Madryt vs FC Barcelona).
-* Wyliczanie procentowych szans na: wygraną gospodarzy, remis, wygraną gości.
-* Wyliczanie szans na konkretne wyniki punktowe/bramkowe.
+### Phase 3: Basic predictor (baseline algorithm)
+* A tool for picking any 2 teams (e.g. Real Madrid vs FC Barcelona).
+* Percentage chances of: home win, draw, away win.
+* Probabilities of specific scorelines.
 
-### Faza 4: Symulator Rozgrywek
-* Możliwość przeprowadzenia symulacji pojedynczego meczu.
-* Możliwość przeprowadzenia symulacji całych lig lub pucharów (od dowolnego momentu w sezonie, biorąc pod uwagę aktualną punktację i formę).
+### Phase 4: Competition simulator
+* Simulate a single match.
+* Simulate whole leagues or cups (from any point in the season, taking the current
+  points and form into account).
 
-### Faza 5: Machine Learning (Zaawansowana analityka)
-* Stworzenie autorskiego modelu sztucznej inteligencji (Machine Learning) do przewidywania wyników meczów.
-* Porównanie skuteczności modelu ML z podstawowym algorytmem stworzonym w Fazie 3.
+### Phase 5: Machine Learning (advanced analytics)
+* Build an own machine-learning model for predicting match results.
+* Compare the ML model's accuracy against the baseline algorithm from Phase 3.

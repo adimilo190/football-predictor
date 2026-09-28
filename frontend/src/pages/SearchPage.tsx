@@ -1,3 +1,8 @@
+// src/pages/SearchPage.tsx
+// Team search ("/teams"): type a name, get matching teams, click one to open its
+// page. The typing goes through useDebounce so we query the API once the user
+// pauses instead of once per keystroke.
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "../hooks/useDebounce";
@@ -8,7 +13,7 @@ function SearchPage() {
   // Raw text the user is typing. Controlled input: React owns this value.
   const [term, setTerm] = useState("");
 
-  // Delayed copy of `term`: catches up 200ms after typing stops. We search on
+  // Delayed copy of `term`: catches up 300ms after typing stops. We search on
   // this, so we don't hit the API on every keystroke.
   const debouncedTerm = useDebounce(term, 300);
 
@@ -24,6 +29,10 @@ function SearchPage() {
     enabled: debouncedTerm.length > 0,
   });
 
+  // The state of the search is collected into a VARIABLE instead of returning
+  // early from the component. An early return would unmount the input while
+  // loading, and the user would lose focus mid-typing; this way the box always
+  // stays on screen and only the area under it changes.
   let results;
   if (isLoading) {
     results = <p className="mt-2">Searching...</p>;

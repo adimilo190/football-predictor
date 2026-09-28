@@ -1,6 +1,18 @@
+// src/components/MatchupCard.tsx
+// The smallest reusable block of match display: two teams, their goals and the
+// date. Used twice over - as a node of the bracket tree, and (through the
+// fixtureToMatchup adapter in TeamPage) as a plain single-match row.
+//
+// It holds two components: MatchupCard (the card) and TeamRow (one team's line).
+// TeamRow stays private to this file because the card is the only sensible way to
+// use it - splitting it out only removes the duplication between the two rows.
+
 import type { Team } from "../api/standings";
 import type { Matchup } from "../api/bracket";
 
+// The backend sends dates as ISO strings in UTC; toLocaleString renders them in
+// the reader's own time zone. The locale is pinned to "pl-PL" for a day-month
+// order (a match on 03/04 is the 3rd of April, never the 4th of March).
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString("pl-PL", {
     dateStyle: "short",

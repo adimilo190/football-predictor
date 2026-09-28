@@ -1,3 +1,8 @@
+// src/pages/LeaguePage.tsx
+// Page for one league ("/leagues/:id"): the season picker plus the standings table.
+// The page owns the season choice, the LeagueTable component owns fetching and
+// rendering the rows - a page wires things together, a component does one job.
+
 import { useParams } from "react-router-dom";
 import LeagueTable from "../components/LeagueTable";
 import { useSeasonSelector } from "../hooks/useSeasonSelector";

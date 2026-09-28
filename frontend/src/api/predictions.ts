@@ -1,3 +1,12 @@
+// src/api/predictions.ts
+// API layer for the predictor: the types mirroring the backend's PredictionResponse
+// plus the call to GET /predict.
+//
+// Watch the naming split here. The QUERY KEYS in the URL must be spelled exactly
+// as the backend names them (home_id, away_id, league_id) - they physically travel
+// in the URL, and a mismatch is an instant 422. The JS parameters (homeId, awayId)
+// are local names and follow the TypeScript convention instead.
+
 import { API_BASE_URL } from "./config";
 
 export type ScoreLine = {

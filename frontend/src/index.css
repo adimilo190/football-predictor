@@ -1,3 +1,20 @@
+/* src/index.css
+ * The app's only global stylesheet, imported once in main.tsx. Three jobs:
+ *   1. pull in Tailwind (its utility classes and its preflight reset);
+ *   2. define the theme as custom properties on :root - colours, fonts, shadow -
+ *      so a colour is changed in one place, not in fifty class names;
+ *   3. set the few page-level rules Tailwind utilities cannot reach: the <body>
+ *      background, the centred #root column, and base type sizes.
+ *
+ * The dark theme is FORCED rather than following the system: the dark values live
+ * directly in :root and color-scheme: dark tells the browser to match its own
+ * widgets (scrollbars, form controls) to it.
+ *
+ * KNOWN DEBT: the h1/h2/p rules below are leftovers from the Vite starter. Being
+ * plain element selectors, they outrank Tailwind's utilities in specificity, so a
+ * class like "text-2xl" on an <h1> silently loses. Scheduled for cleanup.
+ */
+
 @import "tailwindcss";
 
 :root {

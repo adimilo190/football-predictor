@@ -1,3 +1,9 @@
+// src/api/standings.ts
+// API layer for league tables: the types mirroring what the backend returns, plus
+// the functions that fetch them. Components never call fetch themselves - they
+// hand these functions to useQuery, so all knowledge about URLs, query params and
+// response shapes lives in this one folder.
+
 import { API_BASE_URL } from "./config";
 
 // These types describe the shape of the standings API response. They live in the

@@ -1,43 +1,58 @@
-# Stack Technologiczny i Narzędzia
+# Technology Stack and Tools
 
-## Frontend (Interfejs użytkownika)
-* **Język:** TypeScript (nadbudowa na JavaScript wymuszająca typowanie)[cite: 1].
-* **Framework:** React.js (do budowy dynamicznej aplikacji SPA)[cite: 1].
-* **Stylowanie:** Tailwind CSS (nowoczesne i szybkie stylowanie komponentów)[cite: 1].
+## Frontend (user interface)
+* **Language:** TypeScript (a layer on top of JavaScript that enforces typing).
+* **Framework:** React.js (for building a dynamic single-page application).
+* **Styling:** Tailwind CSS (modern, fast component styling).
 
-## Backend (Logika biznesowa i API)
-* **Język:** Python[cite: 1].
-* **Framework:** FastAPI (nowoczesny i szybki framework webowy)[cite: 1].
-* **Narzędzia pomocnicze:**
-  * `httpx`: do asynchronicznej komunikacji z zewnętrznym API-Football[cite: 1].
-  * `SQLAlchemy`: biblioteka ORM do zarządzania bazą danych bez surowych zapytań SQL[cite: 1].
+## Backend (business logic and API)
+* **Language:** Python.
+* **Framework:** FastAPI (a modern, fast web framework).
+* **Supporting libraries:**
+  * `httpx`: asynchronous communication with the external API-Football service.
+  * `SQLAlchemy`: ORM library for working with the database without raw SQL.
 
-## Baza Danych
-* **Silnik:** PostgreSQL (relacyjna baza danych, osadzona w środowisku WSL/Linux)[cite: 1].
+## Database
+* **Engine:** PostgreSQL (relational database, running inside the WSL/Linux environment).
 
-## Machine Learning & Data Science (Planowane na Fazy 4 i 5)
-* **Przetwarzanie danych:** Pandas (obróbka dużych tabel z danymi historycznymi)[cite: 1].
-* **Uczenie maszynowe:** Scikit-learn (tworzenie modeli AI, np. Random Forest, regresja logistyczna)[cite: 1].
+## Machine Learning & Data Science (planned for Phases 4 and 5)
+* **Data processing:** pandas (working with large tables of historical data).
+* **Machine learning:** scikit-learn (building models, e.g. Random Forest, logistic
+  regression).
 
-## Narzędzia DevOps i Organizacja
-* **Kontrola wersji:** Git & GitHub[cite: 1].
-* **Testowanie API:** Postman[cite: 1].
-* **Środowisko Python:** Virtualenv (venv) do izolacji paczek[cite: 1].
-* **Edytor kodu:** VS Code (wyposażony w rozszerzenie SQLTools do podglądu bazy danych)[cite: 1].
-* **Powłoka / terminal:** **Bash w WSL** (Ubuntu). Uwaga: gdy w terminalu wpisujesz komendę `bash`/linuksową, wykonuje się ona w **maszynie wirtualnej Linuksa (WSL)**, a nie w Windowsie. Cały kod, git, Python i PostgreSQL żyją po stronie WSL (`/home/micmilo190/football-predictor`). Dlatego git i Pythona uruchamiamy w środku WSL — git z Windowsa na ścieżce UNC rzuca błąd „dubious ownership" i działa wolno (szczegóły w `CLAUDE.md`).
+## DevOps and organisation
+* **Version control:** Git & GitHub.
+* **API testing:** Postman.
+* **Python environment:** virtualenv (venv) for package isolation.
+* **Editor:** VS Code (with the SQLTools extension for inspecting the database).
+* **Shell / terminal:** **Bash in WSL** (Ubuntu). Note: a `bash`/Linux command typed in
+  the terminal runs inside the **Linux virtual machine (WSL)**, not in Windows. All the
+  code, git, Python and PostgreSQL live on the WSL side
+  (`/home/micmilo190/football-predictor`). That is why git and Python are run inside WSL
+  — git from Windows over a UNC path throws a "dubious ownership" error and is slow
+  (details in `CLAUDE.md`).
 
 ---
 
-## Uzupełnienia po przeglądzie stacku (Sesja 1, 2026-07-02)
-Stack bazowy oceniony jako bardzo dobry i zgodny ze standardami branżowymi. Dodajemy:
+## Additions after the stack review (Session 1, 2026-07-02)
+The base stack was judged very good and in line with industry standards. Added:
 
-* **python-dotenv → potem pydantic-settings** — sekrety i konfiguracja w `.env`, nigdy w kodzie. *(już wdrożone)*
-* **Vite** — standardowe narzędzie budowania aplikacji React (szybki dev-server, prosty setup TS).
-* **Alembic** — migracje schematu bazy; `create_all` tworzy tabele, ale nie umie ich zmieniać (od Sesji 3).
-* **pytest** — testy automatyczne backendu; duży plus w CV (od Sesji 5).
-* **Ruff** — bardzo szybki linter+formatter Pythona (standard 2025/26).
-* **TanStack Query** — profesjonalne pobieranie danych w React (cache, stany ładowania/błędów) (Blok 2).
-* **GitHub Actions** — proste CI (lint + testy przy każdym pushu); mały koszt, duży efekt w CV (Sesja 24).
-* **Uwaga do Postmana:** FastAPI ma wbudowane interaktywne `/docs` (Swagger UI) — na co dzień wystarcza; Postman warto poznać przy okazji.
-* **Ryzyko API-Football:** darmowy plan = 100 zapytań/dzień i możliwy brak danych bieżącego sezonu — weryfikacja w Sesji 3. Plan B: **football-data.org** (darmowo: nasze 6 lig + Liga Mistrzów, bieżący sezon; bez pucharów krajowych). Dane historyczne do ML: **football-data.co.uk** (CSV, bez limitów).
-* **Stretch (jeśli będzie czas):** Docker + docker-compose, deploy (Railway/Render + Vercel), auth JWT.
+* **python-dotenv → later pydantic-settings** — secrets and configuration in `.env`,
+  never in code. *(already in place)*
+* **Vite** — the standard build tool for React apps (fast dev server, simple TS setup).
+* **Alembic** — database schema migrations; `create_all` can create tables but cannot
+  change them (from Session 3).
+* **pytest** — automated backend tests; a strong plus on a CV (from Session 5).
+* **Ruff** — very fast Python linter + formatter (the 2025/26 standard).
+* **TanStack Query** — professional data fetching in React (cache, loading/error states)
+  (Block 2).
+* **GitHub Actions** — simple CI (lint + tests on every push); low cost, high impact on a
+  CV (Session 24).
+* **Note on Postman:** FastAPI ships interactive `/docs` (Swagger UI) — enough for
+  day-to-day work; Postman is still worth learning along the way.
+* **API-Football risk:** the free plan allows 100 requests/day and may not expose the
+  current season — verified in Session 3. Plan B: **football-data.org** (free: our 6
+  leagues + Champions League, current season; no domestic cups). Historical data for ML:
+  **football-data.co.uk** (CSV, no limits).
+* **Stretch (if time allows):** Docker + docker-compose, deployment (Railway/Render +
+  Vercel), JWT auth.

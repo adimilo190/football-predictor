@@ -1,3 +1,12 @@
+// src/pages/HomePage.tsx
+// The landing page and the app's table of contents: two feature entries (the
+// predictor and the team search) above a country-by-country accordion.
+//
+// The accordion is built from the native <details>/<summary> pair rather than
+// React state: the browser handles expanding and collapsing for free, and it stays
+// keyboard-accessible without us writing a line of logic. The competition list
+// itself comes from data/leagues.ts, so this file only decides how to draw it.
+
 import { Link } from "react-router-dom";
 import { COUNTRIES, EUROPEAN_COMPETITIONS } from "../data/leagues";
 
