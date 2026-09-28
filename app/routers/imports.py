@@ -17,9 +17,12 @@ from app.constants import (
     TARGET_LEAGUE_IDS,
 )
 from app.database import get_db
+from app.security import require_import_token
 
 # tags=[...] groups these endpoints under one heading in the Swagger UI (/docs).
-router = APIRouter(tags=["imports"])
+# dependencies=[...] applies the token check to EVERY endpoint on this router, so a
+# new import endpoint is protected the moment it is added - secure by default.
+router = APIRouter(tags=["imports"], dependencies=[Depends(require_import_token)])
 
 # --- API CONFIGURATION ---
 API_KEY = settings.API_FOOTBALL_KEY

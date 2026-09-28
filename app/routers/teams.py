@@ -1,3 +1,13 @@
+# app/routers/teams.py
+# Read endpoints about a single team: its latest results, its upcoming matches and
+# the name search that powers the frontend's team lookup. Attached to the app in
+# main.py via include_router().
+#
+# Matches here are deliberately CROSS-COMPETITION (league, domestic cup and Europe
+# mixed together, sorted by date): a team's form is its form regardless of which
+# trophy the match belonged to. That is the difference from competitions.py, which
+# always answers "within this one competition".
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_

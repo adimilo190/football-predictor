@@ -1,3 +1,14 @@
+# app/prediction/strength.py
+# Turns stored data into the two numbers the maths in poisson.py needs: how many
+# goals we expect each side to score (lambda). The only file in this package that
+# touches the database - its source of truth is the standings table (goals scored
+# and conceded per season), not live API calls.
+#
+# Strength is always measured RELATIVE to one league's average: an attack of 1.2
+# means "20% better than a typical team in THIS league". That is why the predictor
+# is within-league only - comparing two teams from different leagues would compare
+# numbers built on two different baselines, which says nothing.
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -65,6 +76,11 @@ def match_lambdas(
     away_attack, away_defence = team_attack_defence(
         db, away_id, league_id, season, base
     )
+    # Expected goals = the league's average, scaled twice: by how good this
+    # attack is and by how leaky the opponent's defence is. A strong attack facing
+    # a weak defence multiplies up; two solid defences pull the number down.
+    # HOME_ADVANTAGE multiplies the home side only - standings do not split home
+    # from away goals, so a flat boost is the best this data source allows.
     lam_home = base * home_attack * away_defence * HOME_ADVANTAGE
     lam_away = base * away_attack * home_defence
     return (lam_home, lam_away)

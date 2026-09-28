@@ -1,3 +1,15 @@
+# app/models.py
+# SQLAlchemy models = the physical tables in PostgreSQL, one class per table:
+# a competition (League), a club (Team), a single row of a league table (Standing)
+# and a single match (Fixture).
+#
+# These classes describe how data is STORED. What the API gives back to the
+# outside world is described separately in schemas.py - keeping the two apart
+# means an internal column can never leak into a response by accident.
+#
+# Changing a class here does NOT change the database: the schema is migrated
+# exclusively through Alembic (alembic revision --autogenerate, then upgrade).
+
 from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import DateTime
@@ -82,14 +94,30 @@ class Fixture(Base):
     """A single match; cups have no table, only fixtures grouped by round"""
 
     __tablename__ = "fixtures"
+
+    # Same choice as League and Team: reuse the API-Football id as our primary
+    # key, so re-importing a match updates the existing row instead of cloning it.
     id = Column(Integer, primary_key=True, index=True)
+
     league_id = Column(Integer, ForeignKey("leagues.id"), nullable=False)
     season = Column(Integer, nullable=False)
+
+    # Round name exactly as API-Football spells it ("Quarter-finals", but also
+    # "Regular Season - 5" for league matches). The bracket endpoint groups
+    # matches by this value, which is why we store the label and not a number.
     round = Column(String)
     date = Column(DateTime, nullable=False)
+
+    # A match always has two sides, so two foreign keys into the same table.
     home_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+
+    # Match status as API-Football spells it: "NS" (not started), "FT" (full
+    # time), "AET" (after extra time), "PEN" (penalties), and others. This is how
+    # we tell a played match from a scheduled one (see FINISHED_STATUSES).
     status = Column(String)
+
+    # Nullable on purpose: a match that has not kicked off yet has no score.
     home_goals = Column(Integer)
     away_goals = Column(Integer)
     league = relationship("League")

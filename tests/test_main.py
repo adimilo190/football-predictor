@@ -14,9 +14,7 @@ def test_read_root(client):
     """GET / returns 200 and the welcome message."""
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {
-        "message": "Witaj w Football Predictor API! Serwer i baza działają."
-    }
+    assert response.json() == {"message": "Football Predictor API is running"}
 
 
 def test_get_leagues(client, db_session):

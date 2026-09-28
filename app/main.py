@@ -6,16 +6,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
 from app.routers import competitions, imports
 from app.routers import predictions, teams
 
 # NOTE: tables are no longer created here. The database schema is managed
 # exclusively by Alembic migrations — run: alembic upgrade head
 app = FastAPI(title="Football Predictor API")
-# CORS middleware is required to allow the frontend (running on a different port)
+# CORS: a browser only lets a page read our responses if the page's origin is on
+# this list. The origins come from settings (env variable), so the same code runs
+# with localhost in development and with the deployed frontend domain in production.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=settings.allowed_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,4 +34,4 @@ app.include_router(predictions.router)
 # Health check: a simple ping confirming the server and DB are reachable.
 @app.get("/")
 def read_root():
-    return {"message": "Witaj w Football Predictor API! Serwer i baza działają."}
+    return {"message": "Football Predictor API is running"}

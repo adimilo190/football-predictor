@@ -1,3 +1,17 @@
+# app/prediction/poisson.py
+# The pure maths of the Poisson model: no database, no FastAPI, no settings - only
+# numbers in and numbers out. That isolation is what lets tests/test_poisson.py
+# check every function against values computed by hand.
+#
+# Why Poisson: goals are rare, independent events scattered over 90 minutes, which
+# is exactly the situation the Poisson distribution describes. Feed it the expected
+# number of goals (lambda) and it returns the probability of each exact score.
+#
+# The chain through this file:
+#   lambda -> P(k goals) -> vector of P(0..max) per team -> matrix of all
+#   scorelines -> 1/X/2 read off the matrix's triangles.
+# Where the lambdas come from is strength.py's job.
+
 import math
 import numpy as np
 
