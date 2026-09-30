@@ -1,6 +1,9 @@
 # ROADMAP — Football Predictor & Tracker
 
 > A work plan from 2 July to 30 September 2026. It assumes **2 sessions per week** (2–4h each).
+> **Update (30 Sep 2026):** the September goal — a working, publicly deployed app with the
+> predictor — was met. Phases 4 (simulator) and 5 (ML) continue into October on the live
+> project, per the "ship early, improve in public" decision taken in Session 17.
 > Statuses: `[ ]` to do · `[~]` in progress · `[x]` done.
 > After every session we update the statuses here and write a log in `instructions/sessions/`.
 
@@ -15,9 +18,10 @@
 | 10 Aug  | **Phase 1 complete**: the tables and brackets UI works      | [x]    |
 | 24 Aug  | **Phase 2**: team search + match view (no favourites — a narrowed MVP) | [x] |
 | 7 Sep   | **Phase 3 complete**: the predictor (Poisson model)         | [x]    |
-| 14 Sep  | **Phase 4 complete**: match and league simulator            | [ ]    |
-| 28 Sep  | **Phase 5 complete**: ML model + comparison against Poisson | [ ]    |
-| 30 Sep  | README, CI, final polish — **project ready for the CV**     | [ ]    |
+| 28–30 Sep | **Public deployment**: live demo + professional README     | [x]    |
+| Oct     | **Phase 4 complete**: match and league simulator            | [ ]    |
+| Oct     | **Phase 5 complete**: ML model + comparison against Poisson | [ ]    |
+| Oct     | CI (GitHub Actions) + final polish                          | [ ]    |
 
 ---
 
@@ -247,16 +251,22 @@
 - [x] Visualisation: 1/X/2 percentage bars + the most likely scores (`components/PredictionResult.tsx`, `OutcomeBar`)
 - [x] (extra) the `api/predictions.ts` API layer (`getPrediction`), the `/predict` route + an entry from HomePage; the season as a constant (the last full season), no selector
 
-### Session 19 — [~] Deployment + README (the CV sprint) — IN PROGRESS (28 Sep)
+### Session 19 — [x] Deployment + README (the CV sprint) ✦ MILESTONE — DONE 28–30 Sep (log `sessions/session-19.md`)
 > This session took the Session 19 slot ahead of Phase 4, per the priority set in S17
 > ("ship early, improve in public"). Monte Carlo therefore moves to Session 20+.
-- [x] Backend prepared for production: CORS origins from an env variable, the `POST /import-*` endpoints guarded by an `X-Import-Token` secret (`app/security.py`), a `Procfile` (`alembic upgrade head` + uvicorn on `$PORT`), `.python-version`, a `postgres://` → `postgresql://` validator
+>
+> **The project is live:** frontend https://football-predictor-adimilo190.vercel.app,
+> API https://football-predictor-ac40.onrender.com (+ `/docs`).
+- [x] Backend prepared for production: CORS origins from an env variable, the `POST /import-*` endpoints guarded by an `X-Import-Token` secret (`app/security.py`), a `Procfile` (`alembic upgrade head` + uvicorn on `$PORT`), `.python-version`, a `postgres://` → `postgresql://` validator, `pool_pre_ping`/`pool_recycle` against a database that suspends when idle
 - [x] Documentation pass for external readers: a header comment in every source file, comments on the non-obvious decisions, English everywhere (code, `.gitignore`, `.env.example`, `CLAUDE.md`, the project docs in `instructions/`), the dead `App.css` removed
-- [ ] Backend + PostgreSQL deployed (Railway/Render), Alembic migrations in production, data imported into the production database
-- [ ] Frontend deployed (Vercel), `VITE_API_URL` pointed at the backend, the Vercel domain added to CORS
-- [ ] A professional README (description, screenshots, stack, a link to the demo, a note on "within-league v1; season blending + cross-league + ML planned")
+- [x] Backend deployed on **Render** (Frankfurt, free plan) + PostgreSQL on **Neon** (Frankfurt) — chosen over Render's own free Postgres, which is deleted 30 days after creation; Alembic created the schema on the first deploy
+- [x] Data moved to production with `pg_dump --data-only` in two passes (parents before children, because of the foreign keys) instead of re-importing through the API
+- [x] Frontend deployed on **Vercel** (`Root Directory = frontend`), `VITE_API_URL` pointed at the backend, the Vercel domain added to `ALLOWED_ORIGINS`; two externally-visible bugs fixed: Vercel Authentication (every path redirected to a login screen) and 404s on deep links (SPA rewrite in `frontend/vercel.json`)
+- [x] **UptimeRobot** pinging `/` every 5 minutes, so the free instance never sleeps (and it emails when the demo goes down)
+- [x] Production data refreshed on the last day of the API-Football subscription (+233 matches, 3145 updated)
+- [x] A professional README (demo links, feature list, how the Poisson model works, known limitations, architecture diagram, stack rationale, endpoint table, local setup)
 
-**What you are learning:** what deployment actually involves (a process vs static files vs a database), configuration through environment variables, protecting admin endpoints, production migrations.
+**What you are learning:** what deployment actually involves (a process vs static files vs a database), configuration through environment variables, protecting admin endpoints, production migrations, moving data between databases with `pg_dump`, and why testing from the outside catches what testing in your own browser cannot.
 
 ---
 

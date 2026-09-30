@@ -3,7 +3,9 @@
 > The whole project summarised in one place: what lives in every file/folder and why.
 > **This file is updated whenever the structure changes** (a new file = a new entry here) —
 > it is a fixed part of the end-of-session ritual.
-> State as of: Session 19 (2026-09-28).
+> State as of: Session 19 (2026-09-30) — the project is deployed:
+> frontend https://football-predictor-adimilo190.vercel.app,
+> API https://football-predictor-ac40.onrender.com
 
 ---
 
@@ -16,6 +18,7 @@
 | `tests/` | **pytest tests** — they exercise the API through `TestClient` on an isolated database, without starting a server |
 | `alembic/` + `alembic.ini` | **Database migrations** — details below |
 | `instructions/` | **Project documentation** (plans, logs, decisions) — details below |
+| `README.md` | **The repo's front page** — what the project is, links to the live demo and `/docs`, how the Poisson model works (with its known limitations), the architecture, the stack and local setup. The first thing anyone reading this repo sees |
 | `venv/` | Python virtual environment (isolated packages). NOT in git. We use `venv/bin/python`, `venv/bin/pip` |
 | `.env` | **SECRETS**: `DATABASE_URL`, `API_FOOTBALL_KEY`, `IMPORT_TOKEN`, `ALLOWED_ORIGINS`. NOT in git — never commit it! |
 | `.env.example` | A template for `.env` with no real values — it IS in git, so everyone knows which variables to set |
@@ -84,6 +87,7 @@ A single-page application. Run with `npm run dev` (inside WSL, Node through `nvm
 | `package.json` | JS dependencies (React 19, `react-router-dom`, `@tanstack/react-query`, `tailwindcss`, Vite, oxlint, prettier, TypeScript) + the `dev`/`build`/`lint`/`format` scripts |
 | `package-lock.json` | Exact frozen versions of every package (the JS equivalent of `requirements.txt`) |
 | `vite.config.ts` | Vite configuration: the React and Tailwind plugins |
+| `vercel.json` | **Deployment**: rewrites every path to `index.html`, so entering `/predict` directly (or refreshing on it) serves the app instead of a 404 — routing belongs to React Router, and the server must not try to find a file by that name |
 | `tsconfig*.json` | TypeScript configuration (`tsconfig.json` ties it together, `.app`/`.node` — app code and tooling separately) |
 | `.env` | Per-environment configuration: `VITE_API_URL` (the backend address). NOT secret (it ends up in the bundle) but NOT in git |
 | `.env.example` | The template for the frontend `.env` — it IS in git |
@@ -179,7 +183,8 @@ Not a file in the repo, but part of the project:
 
 ## What is still to come (per the ROADMAP)
 
-- **Deployment (Session 19)** — IN PROGRESS: the code is prepared (CORS from an env variable, token-guarded import endpoints, `Procfile`, `.python-version`); next up are the hosting provider (backend + PostgreSQL), the frontend on Vercel and a **professional README** for the CV. BEFORE Phases 4/5.
+- **Deployment (Session 19)** — **DONE**: backend on Render (Frankfurt) + PostgreSQL on Neon (Frankfurt) + frontend on Vercel, with UptimeRobot keeping the free instance awake and a README written for external readers.
+- **Next small items**: screenshots for the README (`docs/screenshots/`), and a `*` route in React Router so an unknown path shows a 404 page instead of an empty screen.
 - **Model #2 (Dixon-Coles)** — **blending several seasons** (time weights: the last plus the current one) + a low-score correction; a home/away split from `fixtures`. Then **model #3 (ML)** + a comparison of the models (Phase 5).
 - **Phase 4 (Monte Carlo simulator)** — simulating a match/league (after deployment).
 - **UI debt**: `TeamSelect` (the duplicated selects in `PredictPage`), cleaning up the element selectors in `index.css` (Vite template leftovers), a loading state for the team lists in `PredictPage`.

@@ -588,3 +588,52 @@
   For Session 19 (after the trip, ~26 Sep): **DEPLOYMENT** (backend + PostgreSQL on
   Railway/Render, frontend on Vercel + CORS) + **a professional README** for the CV — the
   priority BEFORE Phases 4/5.
+
+## Session 19 (2026-09-28 – 09-30) — Public deployment + repo prepared for external readers
+* [x] **The project is live**: frontend https://football-predictor-adimilo190.vercel.app,
+  API https://football-predictor-ac40.onrender.com (+ `/docs`).
+* [x] **Backend prepared for production**: CORS origins read from `ALLOWED_ORIGINS`
+  (a comma-separated string split by a property in `Settings`, because env variables are
+  always text); a `postgres://` → `postgresql://` validator; `Procfile`
+  (`alembic upgrade head && uvicorn … --host 0.0.0.0 --port ${PORT:-8000}`);
+  `.python-version`; `pool_pre_ping=True` + `pool_recycle=300` in `create_engine`
+  (a managed database suspends when idle, so pooled connections die server-side — a class
+  of bug that cannot appear against a local PostgreSQL).
+* [x] **Admin endpoints protected**: new `app/security.py` with the `require_import_token`
+  dependency (`X-Import-Token` header, `secrets.compare_digest`, 401), attached to the
+  whole imports router so every future import endpoint is covered by default. Verified in
+  production: no token → 401, old token after rotation → 401.
+* [x] **Hosting chosen after checking the current terms**: Render (backend, free) + Neon
+  (Postgres, free, no expiry) + Vercel (frontend). Render's own free Postgres was rejected
+  — it is deleted 30 days after creation, which would have killed the CV demo mid-October.
+  Railway, Fly.io and Koyeb no longer offer a permanent free tier. Everything runs in
+  Frankfurt so the backend and database are not separated by an ocean.
+* [x] **Data moved with `pg_dump --data-only` in two passes** (leagues + teams first, then
+  standings + fixtures): `pg_dump` orders tables alphabetically, which would put `fixtures`
+  before its parents and break the foreign keys. Plus a `setval` on the `standings.id`
+  sequence — the only id the database generates itself.
+* [x] **Two bugs caught only by testing from the outside**: Vercel Authentication (every
+  path returned a 302 to a Vercel login screen — invisible to the logged-in owner, fatal
+  for a recruiter) and 404s on deep links (`/predict`, `/leagues/39`), fixed with an SPA
+  rewrite in `frontend/vercel.json`. Also the page title, still `frontend` from the Vite
+  template.
+* [x] **UptimeRobot** pings `/` every 5 minutes so the free instance never sleeps — and
+  the health endpoint deliberately does not touch the database, so Neon keeps sleeping and
+  its 100 compute-hours are not burned.
+* [x] **Documentation pass over the whole repo**: a "what is in this file and why" header
+  in 18 files that lacked one, comments on 11 non-obvious decisions, the dead `App.css`
+  removed, a stale comment fixed, and English everywhere — code, `.gitignore`, both
+  `.env.example` files, `CLAUDE.md` and the five project docs in `instructions/` (1220
+  lines). Session logs stay in Polish as the owner's learning journal, with an English
+  `sessions/README.md` explaining that.
+* [x] **Production data refreshed** on the last day of the API-Football subscription:
+  +233 matches, 3145 updated, +15 teams (leagues 15, teams 1977, standings 572, fixtures
+  8213).
+* [x] **README for the CV** (186 lines): demo links, features, how the Poisson model works
+  step by step, an honest "Known limitations" section, an architecture diagram, the stack
+  with reasoning, an endpoint table and local setup instructions.
+* **Quality**: pytest **19/19**, Ruff clean, oxlint **0/0**, `tsc` clean, `npm run build`
+  green. API-Football: ~21 requests (the refresh).
+* **Result**: the September goal is met — a **publicly available app** with the predictor,
+  a README a stranger can read, and a repo documented for external readers. Phases 4
+  (Monte Carlo) and 5 (ML) continue in October on the live project.
