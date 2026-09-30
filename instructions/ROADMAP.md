@@ -36,7 +36,7 @@
 - [x] First commit on the `main` branch
 - [x] **Homework:** create the `football-predictor` repo on GitHub and push (commands in `sessions/session-01.md`)
 
-**What you are learning:** git (staging, commit, branch, remote, push), what `.env` and `.gitignore` are for, what `requirements.txt` is.
+**Concepts covered:** git (staging, commit, branch, remote, push), what `.env` and `.gitignore` are for, what `requirements.txt` is.
 
 ### Session 2 — 5 Jul [x] Backend structured like a real project
 - [x] Restructuring: a single `main.py` → the `app/` package (`app/main.py`, `app/database.py`, `app/models.py`, `app/schemas.py`, `app/config.py`) — `app/routers/` postponed until there are more endpoints
@@ -45,7 +45,7 @@
 - [x] A tour of Swagger UI (`/docs`) — why FastAPI generates documentation for free
 - [x] Ruff — Python linter/formatter + first run (code clean; comments switched to English)
 
-**What you are learning:** how a production FastAPI project is organised, what Pydantic and validation are, what REST is, code linting.
+**Concepts covered:** how a production FastAPI project is organised, what Pydantic and validation are, what REST is, code linting.
 
 ---
 
@@ -58,14 +58,14 @@
 - [x] **Alembic** — init + configuration (URL from `.env` through `Settings`) + TWO migrations (`leagues`, `teams`+`standings`); `create_all` removed from `main.py`
 - [x] Test data cleaned up (46 UK leagues) — the database now holds the 13 target competitions (6 leagues + 6 cups + Champions League), imported through `POST /import-leagues` with the `TARGET_LEAGUE_IDS` filter (1 API request)
 
-**What you are learning:** relationships in databases (foreign keys), schema migrations (why `create_all` is not enough), reading API documentation.
+**Concepts covered:** relationships in databases (foreign keys), schema migrations (why `create_all` is not enough), reading API documentation.
 
 ### Session 4 — 9 Jul [x] League table import (ETL)
 - [x] Standings imported for the 6 leagues (Premier League, La Liga, Serie A, Bundesliga, Ligue 1, Primeira Liga) — `POST /import-standings`, season 2024/25; 114 teams + 114 table rows, champions verified
 - [x] Rate-limit strategy: max 100 requests/day → we keep the data ourselves; refreshing = a deliberate `POST /import-standings` call (6 requests); HTTP error handling (`raise_for_status`, timeout, an error inside a 200 OK body, an empty response → `HTTPException` 502/404)
 - [x] Upsert (update existing rows instead of creating duplicates) — done in the application through the ORM, idempotency tested (second run: 0 inserts)
 
-**What you are learning:** the ETL pattern, working with an external API's limits, upserts, HTTP error handling.
+**Concepts covered:** the ETL pattern, working with an external API's limits, upserts, HTTP error handling.
 
 ### Session 5 — 3 Aug [x] Public endpoints + first tests
 - [x] Pydantic schemas `TeamResponse`/`StandingResponse` (`StandingResponse` with a nested team)
@@ -74,7 +74,7 @@
 - [x] Test structure: the `tests/` folder (`pytest` installed, `requirements.txt` frozen)
 - [~] `app/routers/` — considered, POSTPONED to Session 6 (`main.py` is still readable)
 
-**What you are learning:** writing automated tests, why tests are a must-have on a CV.
+**Concepts covered:** writing automated tests, why a test suite is what makes later refactoring safe.
 
 ### Session 6 — 5 Aug [x] Cups and brackets
 - [x] The `Fixture` model (a match: home/away teams, score, date, round, status) — two FKs into `teams` + `foreign_keys=`
@@ -83,7 +83,7 @@
 - [x] Alembic migration no. 3 (`create fixtures table`)
 - [x] Routers (`app/routers/`) + tests — **DONE in Session 7** (log `sessions/session-07.md`): `competitions.py` + `imports.py`, the `query_fixtures` helper, `get_db` → `database.py`, 6 pytest tests on an isolated database
 
-**What you are learning:** modelling more complex data (two FKs into one table), grouping/transforming data for the UI, ETL resilience to data gaps.
+**Concepts covered:** modelling more complex data (two FKs into one table), grouping/transforming data for the UI, ETL resilience to data gaps.
 
 ---
 
@@ -105,7 +105,7 @@
 > (log `sessions/session-13.md`). Backend: the `GET /leagues/{id}/seasons` endpoint (`DISTINCT`) +
 > standings for **2022/2023** imported on the free plan. Frontend: `getStandings`+`season` / the new
 > `getSeasons`, **`season` in the `queryKey`**, a controlled `<select>` in `LeaguePage` (useState = the
-> UI choice, useQuery = the season list). **Phase 2 data-source decision: the owner buys API-Football
+> UI choice, useQuery = the season list). **Phase 2 data-source decision: moving to API-Football
 > premium** (ids consistent with our database + the current season + cups; risk #1 closed). Next: a
 > selector for brackets + the real start of Phase 2 once premium is in place.
 >
@@ -126,7 +126,7 @@
 - [x] **CORS** in FastAPI (`CORSMiddleware`, origin 5173) — verified with curl (preflight + an allowed and a foreign origin)
 - [x] (debt from S6/7) the `knockout_only` filter in `GET /leagues/{id}/bracket` + the `KNOCKOUT_ROUNDS` constant + 2 tests
 
-**What you are learning:** the JS ecosystem (node/npm/Vite), what an SPA is, how the frontend talks to the backend, CORS.
+**Concepts covered:** the JS ecosystem (node/npm/Vite), what an SPA is, how the frontend talks to the backend, CORS.
 
 ### Session 8 — [x] React + Tailwind basics + the first table — DONE on the calendar in Session 9 (log `sessions/session-09.md`)
 - [x] React foundations: components, props, `useState`, `useEffect`
@@ -134,14 +134,14 @@
 - [x] The `LeagueTable` component: fetching `GET /leagues/{id}/standings` + TS types for the API response
 - [x] (extra) loading/error states (`res.ok`), split into `src/components/` + prettier, team crests
 
-**What you are learning:** the core of React, typing API responses in TypeScript, Tailwind.
+**Concepts covered:** the core of React, typing API responses in TypeScript, Tailwind.
 
 ### Session 9 — [x] Routing and navigation — DONE on the calendar in Session 10 (log `sessions/session-10.md`)
 - [x] React Router (v7): a home page (the list of 6 leagues), `/leagues/:id`, a layout with a header
 - [x] Navigation: clickable league cards (`<Link>`) + the header as a way back to `/` *(league logos — optional, later)*
 - [x] (extra) `useParams` — one `LeagueTable` for every league; the API base URL in `.env` (`src/api/config.ts`)
 
-**What you are learning:** routing in an SPA, URL parameters, layout composition.
+**Concepts covered:** routing in an SPA, URL parameters, layout composition.
 
 ### Session 10 — [x] Proper data fetching — DONE on the calendar in Session 11 (log `sessions/session-11.md`)
 - [x] **TanStack Query**: `QueryClientProvider` + `useQuery` (cache, `isLoading`/`isError`, background refetch)
@@ -149,14 +149,14 @@
 - [x] A shared API client (`frontend/src/api/standings.ts` — `getStandings` + the `Team`/`Standing` types)
 - [x] (extra) Phase 1 polish: league cards (a responsive `grid` + `hover`/shadow) and the header (`border-b`, hover)
 
-**What you are learning:** professional data-fetching patterns (the same thing companies do).
+**Concepts covered:** professional data-fetching patterns (the same thing companies do).
 
 ### Session 11 — [x] Cup brackets (UI) — DONE on the calendar in Session 12 (log `sessions/session-12.md`)
 - [x] The `Bracket` component — rounds as columns, rebuilt into a **tournament tree** (stepped layout + two-legged ties + aggregates)
 - [x] Pages for the domestic cups + the Champions League (the `/bracket/:id` route, `BracketPage`)
 - [x] (extra) the **Europa League + Conference League** imported (+ an import bug fix); **navigation** — a country accordion on HomePage
 
-**What you are learning:** building a custom, complex UI component.
+**Concepts covered:** building a custom, complex UI component.
 
 ### Session 12 — [ ] Phase 1 polish ✦ MILESTONE (10 Aug)
 - [ ] Responsiveness (mobile), error states, loading skeletons
@@ -177,7 +177,7 @@
 > the Phase 2 frontend (search + favourites in `localStorage`) + tests for the new endpoints.
 >
 > **Progress (4 Sep, Session 16):** "Phase 2 frontend" **done** (log `session-16.md`), but in a
-> **narrowed scope**: the owner dropped "favourites" (`localStorage`, `useFavorites`, the
+> **narrowed scope**: "favourites" were dropped (`localStorage`, `useFavorites`, the
 > dashboard). The feature is **team search + a view of their matches**.
 > Done: tests for 3 endpoints (pytest 8→12), `api/teams.ts`, the `useDebounce` hook,
 > `SearchPage` (debounce + `useQuery`), `TeamPage` (two columns past/future + `MatchupCard`
@@ -201,16 +201,16 @@
 - [x] `GET /teams/{id}/past-matches?last=5`, `GET /teams/{id}/future-matches?next=5` (renamed from `results`/`fixtures` — avoiding a collision with `get_league_fixtures`)
 - [x] `GET /teams?search=...` (search, `ilike` — contains the phrase, case-insensitive)
 
-**What you are learning:** query parameters, filtering and sorting in SQLAlchemy, indexes.
+**Concepts covered:** query parameters, filtering and sorting in SQLAlchemy, indexes.
 
 ### Session 14 — [x] Frontend: search + match view — DONE in Session 16 (log `session-16.md`)
 > **Scope narrowed (S16):** no "favourites" (`localStorage`/`useFavorites`/dashboard) —
-> a deliberate decision by the owner. The feature = team search + a view of their matches.
+> a deliberate scope decision. The feature = team search + a view of their matches.
 - [x] Team search (`SearchPage`: a controlled input + **debounce** + `useQuery`)
 - [x] A clickable result → the team page `/teams/:id` (`TeamPage`: past/future in two columns)
 - [~] ~~Favourites + `localStorage`~~ — **cut from scope** (replaced by the "Find team" entry on HomePage)
 
-**What you are learning:** controlled forms, a custom hook (`useDebounce`), debouncing, `Link`, component reuse.
+**Concepts covered:** controlled forms, a custom hook (`useDebounce`), debouncing, `Link`, component reuse.
 
 ### Session 15 — [~] "My teams" ✦ MILESTONE (24 Aug) — REPLACED by the team view (S16)
 > The favourites dashboard was **cut** (there are no "favourites"). `TeamPage` plays its role: after
@@ -230,7 +230,7 @@
 > **Decisions**: the prediction season is a constant (the last **full** season — the current
 > one in September is too thin, ~5 rounds → noisy strengths), no season selector.
 > **A model #2 (Dixon-Coles) feature**: blending several seasons (a weighted average of the
-> last and the current one = time weights) — the owner's idea, parked behind the baseline
+> last and the current one = time weights) — an idea worth doing, parked behind the baseline
 > ("baseline first, then MEASURED improvements").
 > **New priority (S17)**: next (S19, after the trip ~26 Sep) = **a public deployment
 > + README (CV) BEFORE Phases 4/5** — "ship early, improve in public".
@@ -240,7 +240,7 @@
 - [x] Implemented in plain Python/numpy: `app/prediction/poisson.py` (the maths) + `strength.py` (λ from `standings`, independent of the API)
 - [x] (beyond plan) **3 models planned**: #1 baseline Poisson (this one) → #2 improved (Dixon-Coles) → #3 ML; a **within-league** predictor
 
-**What you are learning:** how a real statistical bookmaker model works, numpy, separating business logic from the API layer.
+**Concepts covered:** how a real statistical bookmaker model works, numpy, separating business logic from the API layer.
 
 ### Session 17 — [x] The prediction endpoint + tests — DONE in Session 17 (log `sessions/session-17.md`)
 - [x] `GET /predict` (two teams within one league) → { P(1), P(X), P(2), top 5 scores } — GET, not POST (a pure read/computation)
@@ -266,7 +266,7 @@
 - [x] Production data refreshed on the last day of the API-Football subscription (+233 matches, 3145 updated)
 - [x] A professional README (demo links, feature list, how the Poisson model works, known limitations, architecture diagram, stack rationale, endpoint table, local setup)
 
-**What you are learning:** what deployment actually involves (a process vs static files vs a database), configuration through environment variables, protecting admin endpoints, production migrations, moving data between databases with `pg_dump`, and why testing from the outside catches what testing in your own browser cannot.
+**Concepts covered:** what deployment actually involves (a process vs static files vs a database), configuration through environment variables, protecting admin endpoints, production migrations, moving data between databases with `pg_dump`, and why testing from the outside catches what testing in your own browser cannot.
 
 ---
 
@@ -276,7 +276,7 @@
 - [ ] Simulating a match = drawing a result from the Poisson distributions
 - [ ] Simulating a league: the remaining matches × 1000 iterations from the current table → each team's chance of the title / top 4 / relegation
 
-**What you are learning:** the Monte Carlo method, thinking about performance (numpy vectorisation).
+**Concepts covered:** the Monte Carlo method, thinking about performance (numpy vectorisation).
 
 ### Session 21 — [ ] The simulator UI ✦ MILESTONE
 - [ ] A "Simulate the season" button + a colour-coded probability table
@@ -291,14 +291,14 @@
 - [ ] pandas: loading, cleaning, features (form over the last 5 matches, goal averages, home/away, H2H)
 - [ ] Train/test split (chronological — not random!)
 
-**What you are learning:** pandas, feature engineering, why time-series data is split chronologically.
+**Concepts covered:** pandas, feature engineering, why time-series data is split chronologically.
 
 ### Session 23 — [ ] Training and evaluating models
 - [ ] scikit-learn: logistic regression + Random Forest
 - [ ] Metrics: accuracy, log-loss, confusion matrix
 - [ ] **Comparison: the ML model vs Poisson vs "always pick the home team"** (the baseline)
 
-**What you are learning:** the full ML cycle: data → training → evaluation → conclusions; why a baseline matters.
+**Concepts covered:** the full ML cycle: data → training → evaluation → conclusions; why a baseline matters.
 
 ### Session 24 — [ ] Integrating ML into the app
 - [ ] Saving the trained model (`joblib`), `POST /predict-ml`
@@ -318,7 +318,7 @@
 
 ---
 
-## Target UX vision (the owner's ideas — to be scheduled into sessions)
+## Target UX vision (ideas to be scheduled into sessions)
 
 > Noted in Session 11 (2026-08-18). The target shape of the navigation and features;
 > delivery spread across the coming sessions. It replaces the current "flat" list of 6
@@ -352,10 +352,10 @@
    - **Season access: ONLY 2022/23, 2023/24, 2024/25.** No access to 2025/26 (finished) or 2026/27 (upcoming). The newest available = **2024/25**.
    - **Decision:** Phases 1, 3 and 4 are built on season **2024/25** (complete, real data — perfectly fine for a portfolio). Phase 5 (ML) is independent — data from football-data.co.uk CSVs.
    - **Phase 2 (favourites: upcoming matches)** is the only phase that needs live data. The source decision is taken when it starts (~24 Aug, once the 2026/27 season is under way).
-   - **The owner's preference (settled 2026-07-02):** he wants **the current season AND history from several previous ones**. The "demo on 2024/25 only" option is OUT. Two complete routes to choose from:
+   - **Requirement (settled 2026-07-02):** the app needs **the current season AND history from several previous ones**. The "demo on 2024/25 only" option is OUT. Two complete routes to choose from:
      - **A) A free hybrid:** [football-data.co.uk](https://www.football-data.co.uk) (CSVs: 20+ seasons of history + the current season, results → we compute the tables ourselves) + [football-data.org](https://www.football-data.org) (free API: schedule + live tables for the 6 leagues + CL). Zero cost, more work, no domestic cups. **← the recommendation for a CV.**
      - **B) API-Football premium:** one source, everything (current + history + cups + logos), ~19 €/month.
-     - Choice: **left to the owner** (Session 3 / the start of Phase 2).
+     - Choice: **deferred** (Session 3 / the start of Phase 2).
    - **UPDATE (Session 14, 31 Aug):** option **B** chosen — the **Pro plan** is running (7500 requests/day, seasons up to the live 2026/27, valid until 2026-10-01). Risk closed.
 2. **The football calendar:** July is the gap between seasons — we build on the finished 2025/26 season, and live data arrives naturally in August (the 2026/27 kick-off) — just in time for Phase 2.
 3. **Holidays / less time:** a buffer in week 8 and at the end; if we slip, we cut cup simulation (S20) and some UI polish — we never cut tests or the README.

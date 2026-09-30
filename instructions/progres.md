@@ -124,8 +124,8 @@
   (`__init__.py` + `test_main.py`), 4 tests through `TestClient` (root, `/leagues`,
   standings with `rank==1` and a nested team, wrong id → 404) — 4/4 green; Ruff clean
   (`app/` + `tests/`).
-* **Change of working mode:** the owner writes the code himself, Claude guides and
-  reviews (it does not type the code for him); exceptions only on an explicit request.
+* **Working agreement set:** implementation is written by hand, with an assistant used for
+  guidance and review rather than code generation (see `CLAUDE.md`).
 * **Result:** the API has clean read endpoints for the frontend and a first safety net of
   tests. `app/routers/` postponed to Session 6.
 
@@ -161,8 +161,7 @@
   test), fixtures `client` and `db_session`.
 * [x] **6 tests** of the read endpoints (Arrange–Act–Assert, each seeding its own data):
   `/leagues`, `/standings`, `/fixtures`, `/bracket` (proving rounds are sorted by date) +
-  root + 404. The `/fixtures` and `/bracket` tests were written by the owner (Claude:
-  guidance + review).
+  root + 404.
 * [x] **`main.py` refactored from 522 to 23 lines** into routers: `get_db` →
   `database.py` (avoiding an import cycle), `app/routers/competitions.py` (reads + the
   `query_fixtures` helper, DRY), `app/routers/imports.py` (writes + ETL). Done step by
@@ -177,7 +176,7 @@
   `npm create vite@latest frontend -- --template react-ts` (React 19 + Vite 8 + oxlint) +
   `npm install` (27 packages). Foundations taught by analogy Python→JS
   (node/npm/package.json/node_modules).
-* [x] **First component** (written by the owner): `LeagueCard` (typed props
+* [x] **First component**: `LeagueCard` (typed props
   `{name, country}`, destructuring, JSX) reused 5× in `App`; fragment `<>` +
   `export default`. Dev server `npm run dev` (:5173, HMR), rendering verified.
 * [x] **CORS** (`CORSMiddleware` in `app/main.py`, origin `http://localhost:5173`,
@@ -194,7 +193,7 @@
   Session 9). The Phase 1 backend gained a clean knockout filter. 0 API-Football requests.
 
 ## Session 9 (2026-08-17) — Interactive React + the first table on live data
-* [x] **`useState` + `useEffect`** (warm-up `Counter`): state = memory + a re-render
+* [x] **`useState` + `useEffect`** (starting with a `Counter` component): state = memory + a re-render
   trigger; effects driven by the dependency array (`[]` = once after mounting), not on
   every render. Avoided the `onClick={() => ...}` trap (a function, not a call).
 * [x] **`LeagueTable` with fetch**: TS types `Team`/`Standing` mirroring `schemas.py`
@@ -203,9 +202,9 @@
 * [x] **Loading/error states**: `try/catch/finally`, the `res.ok` trap (`fetch` does not
   throw on 404 → a manual `throw` = the frontend's `raise_for_status`), generic
   `useState<string | null>`.
-* [x] **Tailwind CSS v4** (set up by Claude, method verified with WebFetch):
+* [x] **Tailwind CSS v4** (method verified against the current docs):
   `@tailwindcss/vite` + `@import "tailwindcss"` (NOT the old v3 way). Utility-first,
-  `hover:`/`odd:` variants, `text-align` inheritance; table styling (by the owner).
+  `hover:`/`odd:` variants, `text-align` inheritance; table styling.
 * [x] **Housekeeping**: split into `src/components/LeagueCard.tsx` +
   `LeagueTable.tsx` (`import`/`export default`), `App.tsx` as the skeleton, `Counter`
   removed; **prettier** added (`npm run format` script, the equivalent of `ruff format`).
@@ -252,7 +251,7 @@
   moved out of the component (they model server data), `getStandings(leagueId):
   Promise<Standing[]>` — `fetch` + `if (!res.ok) throw` (the bridge to `isError`, since
   `fetch` does not throw on 4xx/5xx) + `return res.json()`. No `useState`/`try/catch`.
-* [x] **`LeagueTable` refactored onto `useQuery`** (the core, by the owner):
+* [x] **`LeagueTable` refactored onto `useQuery`** (the core change):
   `queryKey: ["standings", leagueId]` (cache per league, replacing the `[leagueId]` deps),
   `queryFn: () => getStandings(leagueId)` (an arrow function — not an immediate call);
   3× `useState` + `useEffect` + `try/catch` → a single `useQuery`. Guard
@@ -268,8 +267,7 @@
   plus the European cups (CL/EL/Conference), accordion → league/domestic cup, click →
   table/bracket, a year selector, a predictor tab (later stage).
 * **Quality:** `npm run build` (tsc+vite) green, oxlint 0/0, prettier clean. Backend
-  unchanged, **0** API-Football requests. A practical lesson: a file written "from
-  underneath" (by a tool) vs an open VS Code buffer → on reload choose **Don't Save**.
+  unchanged, **0** API-Football requests.
 * **Result:** data fetching now follows a professional pattern (cache for free) and the
   home page looks serious. For Session 12: **cup brackets (UI)** — a `Bracket` component
   (rounds as columns) + `useQuery` for `GET /leagues/{id}/bracket`; possibly starting the
@@ -302,7 +300,7 @@
   7 expandable sections built on the native **`<details>`** element (6 countries +
   "European Competitions"), links league→`/leagues/:id`, cup/European→`/bracket/:id`. The
   dead `LeagueCard.tsx` removed.
-* [x] **Learning**: a React component is not `async` (it draws the current state,
+* [x] **Takeaways**: a React component is not `async` (it draws the current state,
   `useQuery` triggers the redraw); a tree through flexbox; `?? "-"` vs `|| "-"` (0 is
   valid); `key` on the element inside `.map`, wrapper outside; error vs warning; where to
   learn flexbox (Froggy/CSS-Tricks/Tailwind docs/DevTools); WSL: `npm run dev` needs an
@@ -318,7 +316,7 @@
 ## Session 13 (2026-08-20) — Season selector (tables) + dates in the bracket + Phase 2 data-source decision
 * [x] **Direction and data source decided**: start Phase 2 (core), but first the dates in
   the bracket and the season selector. The Phase 2 blocker (the free API only serves
-  2022–2024, no live season) resolved by a decision: **the owner buys API-Football
+  2022–2024, no live season) resolved by moving to **API-Football
   premium** — ids consistent with our database (no mapping), cups, the current season plus
   history from one source. Risk #1 closed.
 * [x] **Step 1 — dates/times in the bracket** (frontend only; the backend already sent
@@ -326,7 +324,7 @@
   per-match data, like goals); `components/MatchupCard.tsx` — the `formatDate` helper
   (`toLocaleString("pl-PL", {dateStyle, timeStyle: "short"})`, automatic UTC→local zone) +
   a date row `legs.map(...).join(" / ")`. Format `12.03.2025, 21:00`.
-* [x] **Step 2 — backend endpoint `GET /leagues/{id}/seasons`** (written by the owner):
+* [x] **Step 2 — backend endpoint `GET /leagues/{id}/seasons`**:
   `query(Standing.season).filter(league_id).distinct().order_by(desc())`, unwrapping the
   tuples in a loop (`row[0]`), `response_model=list[int]`. It asks the database for the
   truth instead of hardcoding a list.
@@ -340,9 +338,9 @@
   `<select>` (`Number(e.target.value)`), the rules of hooks (guard below the hooks),
   `enabled: !!id`.
 * [x] **Selector fix**: position (the native `<select>` popup covered the table → `flex
-  justify-end`, then the owner moved it left); **review bug**: `justify-begin` does not
+  justify-end`, then moved to the left); **review bug**: `justify-begin` does not
   exist in Tailwind (it worked by accident — flex defaults to start) → `justify-start`.
-* **Learning**: front↔backend communicate only through the URL (a function parameter is
+* **Takeaways**: front↔backend communicate only through the URL (a function parameter is
   not server data); path param (by position) vs query param (by name); a parameter with a
   default is optional, without one it is required; a single-column query returns a list of
   **tuples** `(2024,)`, `DISTINCT`; **server state (useQuery) vs UI state (useState)** —
@@ -358,7 +356,7 @@
 * [x] **Decisions**: premium bought (**Pro plan**); start with the bracket selector (Phase
   2 moves to S15). Architecture of the season list — **option B (`UNION`)** instead of a
   separate endpoint (DRY; the frontend keeps a single `getSeasons`).
-* [x] **Step 1 — backend `/leagues/{id}/seasons` on `UNION`** (written by the owner): the
+* [x] **Step 1 — backend `/leagues/{id}/seasons` on `UNION`**: the
   problem — cups have no rows in `standings`, so the old endpoint returned `[]` for
   brackets. Solution: two sub-queries (`Standing.season` + `Fixture.season`) joined with
   `.union()`, then `.all()`, unwrapping `row[0]`, `sort(reverse=True)`. Bugs from the
@@ -383,7 +381,7 @@
   2026 (**1052**). Copa del Rey/Coupe de France 2026 = 0 (those cups had not started — the
   ETL tolerates it). `/seasons` verified: Copa del Rey `[2025,2024]` (no 2026 — the truth
   from our own database).
-* **Learning**: `UNION` (dedup, the same column on both sides); `Query` (lazy, `.union()`)
+* **Takeaways**: `UNION` (dedup, the same column on both sides); `Query` (lazy, `.union()`)
   vs `.all()` (materialising into a `list`); the anatomy of a URL (path `/` = resource,
   query `?`/`&` = options); the order of function arguments (positional) ≠ query params in
   a URL (named); a controlled `<select>` with a value outside its options desynchronises;
@@ -397,7 +395,7 @@
   debt + the start of Phase 2 (team results/schedule + search) on live data.
 
 ## Session 15 (2026-09-01) — Phase 2 starts (backend): team matches + search
-* [x] **Debt from S14 — test for `GET /leagues/{id}/seasons`** (written by the owner): an
+* [x] **Debt from S14 — test for `GET /leagues/{id}/seasons`**: an
   **airtight** scenario — a season only in `standings` (2023), only in `fixtures` (2025),
   in both (2024→dedup); each case defends a different part of the `UNION`. Review bug:
   `sorted(data) == [...]` (ascending vs a descending list — the test would have failed and
@@ -429,22 +427,22 @@
   is generic); "played" determined by `status`, not by date; the names
   `past-matches`/`future-matches` (`fixtures` collided with `get_league_fixtures`;
   `games`→`matches`); a URL ends with a noun.
-* **Learning**: what makes a test airtight; `ruff check` (F401, lint) ≠ `ruff format`
+* **Takeaways**: what makes a test airtight; `ruff check` (F401, lint) ≠ `ruff format`
   (style); leagues and cups share the `leagues` table; `APIRouter` + `include_router`
   (not wired = 404); path/query/dependency params; `or_`/`.in_`/`.desc()`/`.asc()`/
   `.limit()`; `ilike`+`%` (a bind param, so no SQL injection); statuses `FT/AET/PEN` vs
   `NS`; `next` shadows a builtin; a function name is not the URL; a trailing `\n` (POSIX).
 * **Quality**: Ruff clean, pytest **8/8**. API-Football (Pro): ~15 import requests.
 * **Result**: **the Phase 2 backend is complete** — league import plus 3 team endpoints,
-  verified on live 2026 data. For Session 16: tests for the new endpoints (a warm-up) +
+  verified on live 2026 data. For Session 16: tests for the new endpoints +
   **the Phase 2 frontend** (search with debounce + favourites in `localStorage`, a
   `useFavorites` hook) + the UX debt (default season `seasons[0]`).
 
 ## Session 16 (2026-09-04) — Phase 2 frontend (search + match view) + dark theme
-* [x] **Phase 2 scope changed**: the owner drops "favourites"
+* [x] **Phase 2 scope changed**: "favourites" dropped
   (`localStorage`/`useFavorites`/dashboard). The feature is **team search + a view of
   their matches** (a deliberate MVP narrowing).
-* [x] **Warm-up — tests for the 3 endpoints from S15** (written by the owner):
+* [x] **Tests for the 3 endpoints from S15**:
   `past-matches` (airtight scenario A/B/C/D), `future-matches` (a mirror with `NS`+`asc`;
   data consistent with the domain — `NS` has no goals), `search_teams` ("green ≠
   airtight": the phrase `eSTEr` is a substring in the middle, and assertions **by index**
@@ -477,7 +475,7 @@
   components (league table, hovers).
 * [x] `.vscode/settings.json` (local, outside git) — format-on-save with Ruff/Prettier per
   language.
-* **Learning (React from the ground up, a lot of it)**: hooks (definition + rules + custom
+* **Takeaways (React)**: hooks (definition + rules + custom
   hooks); `useEffect` (a callback after the render + cleanup + the dependency array);
   `() =>` as a callback; `setTimeout`; `A && B` / ternary / `if` + a variable in JSX;
   `??`/`?.` vs an explicit `if`; `let` vs `const`; **a render is a snapshot** (new `const`s
@@ -528,7 +526,7 @@
   **within-league** (strength is relative to a league); `GET`, not `POST`. **New
   goal/schedule**: a beta with the predictor by 13 Sep (UI), **deployment + README + CV
   after the trip, ~26 Sep** — the MVP-to-deployment priority comes BEFORE Phases 4/5.
-* **Learning**: Poisson/λ; the strength model (the baseline as a reference, accounting for
+* **Takeaways**: Poisson/λ; the strength model (the baseline as a reference, accounting for
   the opponent); numpy (`outer`/`tril`/`triu`/`trace`, normalisation); `func.sum` +
   `.scalar()` vs `.all()`; `list` (the class) vs `[]`; derived state; `!data` vs
   `.length===0`; `group-hover`; separating maths from the database from the API; GET for
@@ -541,7 +539,7 @@
   bars + most likely scores).
 
 ## Session 18 (2026-09-13) — The predictor UI (Phase 3 frontend, a sprint) — Phase 3 COMPLETE
-* [x] **API layer `frontend/src/api/predictions.ts`** (written by the owner): types
+* [x] **API layer `frontend/src/api/predictions.ts`**: types
   `ScoreLine`/`Prediction` (mirroring `PredictionResponse`) +
   `getPrediction(homeId, awayId, leagueId, season)`. The review caught a real bug: the
   query keys in the URL were camelCase (`homeId`) while the backend expects `home_id`
@@ -571,7 +569,7 @@
   `PREDICTION_SEASON=2025`** (the last completed season → stable data; the current one in
   September is too thin); **blending seasons is a model #2 feature** (Dixon-Coles), not
   baseline work (baseline first); the predictor is **within-league**.
-* **Learning**: path param (by position) vs query param (the name in the URL must match);
+* **Takeaways**: path param (by position) vs query param (the name in the URL must match);
   Python `snake_case` vs TS `camelCase`/`PascalCase`/`UPPER_SNAKE` conventions (and why;
   PascalCase for components is a JSX requirement); `enabled` in `useQuery` (a dependent
   query); resetting dependent state; the non-null `!`; components + props + DRY
@@ -624,7 +622,7 @@
   in 18 files that lacked one, comments on 11 non-obvious decisions, the dead `App.css`
   removed, a stale comment fixed, and English everywhere — code, `.gitignore`, both
   `.env.example` files, `CLAUDE.md` and the five project docs in `instructions/` (1220
-  lines). Session logs stay in Polish as the owner's learning journal, with an English
+  lines). Session logs stay in Polish as the project's working journal, with an English
   `sessions/README.md` explaining that.
 * [x] **Production data refreshed** on the last day of the API-Football subscription:
   +233 matches, 3145 updated, +15 teams (leagues 15, teams 1977, standings 572, fixtures
