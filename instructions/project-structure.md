@@ -3,9 +3,11 @@
 > The whole project summarised in one place: what lives in every file/folder and why.
 > **This file is updated whenever the structure changes** (a new file = a new entry here) —
 > it is a fixed part of the end-of-session ritual.
-> State as of: Session 19 (2026-09-30) — the project is deployed:
+> State as of: Session 20 (2026-10-29) — the project is deployed:
 > frontend https://football-predictor-adimilo190.vercel.app,
 > API https://football-predictor-ac40.onrender.com
+> The Monte Carlo simulator and the multi-model architecture are in the backend; the
+> simulator UI is still to come.
 
 ---
 
@@ -61,17 +63,28 @@ A Python package (`__init__.py`). Layers from the bottom up:
 | `competitions.py` | **Reads**: `GET /leagues`, `GET /leagues/{id}/standings` (sorted by `rank`, `joinedload` against N+1), `GET /leagues/{id}/fixtures` (flat list), `GET /leagues/{id}/bracket` (grouped by round + the `knockout_only` filter), `GET /leagues/{id}/seasons` (**available seasons** — a `UNION` of seasons from `standings` (leagues) and `fixtures` (cups), feeding both the table and bracket selectors). Helper `query_fixtures` (DRY) |
 | `imports.py` | **Writes / ETL**: `POST /import-leagues`, `POST /import-standings`, `POST /import-fixtures` (leagues + cups + European = `TARGET_LEAGUE_IDS`) plus the `fetch_*` (Extract from API-Football) and `upsert_*` (Transform+Load) functions. Handles rate limits and HTTP errors. **The whole router requires the `X-Import-Token` header** (see `security.py`) |
 | `teams.py` | **Team reads**: `GET /teams/{id}/past-matches` (latest finished — `or_` home/away + `FINISHED_STATUSES` + `date desc` + `limit`), `GET /teams/{id}/future-matches` (next scheduled — `status NS` + `date asc`), `GET /teams?search=` (search — `name.ilike("%…%")`, `limit 20`). Matches/results are **cross-competition** (a team's form regardless of the competition) |
-| `predictions.py` | **Prediction**: `GET /predict` (two teams within one league → `PredictionResponse`: P(1/X/2) + top 5 scores). 404 validation (both teams must have `standings`), `float()` for clean JSON. Calls `prediction/strength.py` (λ) → `prediction/poisson.py` (the maths) |
+| `predictions.py` | **Prediction and simulation**, three endpoints, all going through the registry so none of them knows which model it holds: `GET /predict` (two teams in one league → P(1/X/2) + top 5 scores, 404 if either team has no `standings`), `GET /leagues/{id}/simulate` (**Monte Carlo** — `season`, `model`, `iterations` bounded 1–10000, `strength_season` defaulting to `season - 1`, `seed`; returns the predicted final table with a probability for every position) and `GET /models` (the registry's metadata — the only endpoint with no database dependency). Maps `UnknownModelError` → 400 and a missing league/season → 404; a `ValueError` from the simulator is deliberately left to become a 500, since it means our own data is inconsistent |
 
 ### `app/prediction/` — the prediction model (Poisson)
 
-A separate package: **pure prediction logic**. Layers: `strength.py` (data→λ, reads the database) → `poisson.py` (λ→probabilities, no DB). The `routers/predictions.py` endpoint wires them together.
+A separate package: **pure prediction logic**, with no FastAPI anywhere in it. Layers:
+`strength.py` (data→λ, the only file that reads the database) → `poisson.py`
+(λ→probabilities, no DB) → `poisson_model.py` (both, behind the contract) → `registry.py`
+(name→model) → `simulation.py` (a model→a simulated season). Everything above the
+contract works with **any** model, so adding one touches only `registry.py`.
+
+Convention for this package: **plain classes with `__init__`** — no `@dataclass`, no
+`NamedTuple` (see `CLAUDE.md`).
 
 | File | What it does |
 |---|---|
 | `__init__.py` | Makes `prediction/` a package |
+| `base.py` | **The model contract**: `PredictionModel(abc.ABC)` — metadata as class attributes (`name`, `label`, `description`, `supports_cross_league`), `__init__(db, league_id, season)`, abstract `probabilities()` and `sample()`, default `top_scorelines()` and `sample_many()`. An ABC rather than a `Protocol`, because it fails at construction time and the project has no mypy |
+| `poisson_model.py` | **Model #1 behind the contract**: owns no maths — it wires `poisson.py` to a `LeagueStrength` built once in its `__init__`. Overrides `sample_many()` to draw a whole season in one numpy call (measured 8x faster than the base loop) and strips numpy scalars so the contract returns plain Python numbers |
+| `registry.py` | **Name → model**: the explicit `MODELS` dict, `DEFAULT_MODEL`, `build_model()`, `get_model_class()`, `UnknownModelError` (its message lists what is available) and `list_models()`, which reads class metadata without a database session |
+| `simulation.py` | **Monte Carlo over a season**: `TeamStart` (the table a simulation begins from), `TeamOutcome` (a team's odds of every place + average points), `final_table()` (points → goal difference → goals scored) and `simulate_season()` — one `sample_many()` call, then a loop that re-copies the starting table every iteration and counts finishing positions. Model-agnostic: it only ever calls the contract |
 | `poisson.py` | **Pure maths** (no DB): `poisson_pmf` (`λ^k·e^-λ/k!`), `goal_distribution` (the vector P(0..max)), `score_matrix` (`np.outer` of the two distributions + normalisation), `match_outcome_probabilities` (`np.tril(-1)`/`trace`/`triu(1)` → P(1/X/2)), `top_scorelines` (the n most likely scores) |
-| `strength.py` | **λ from data** (`standings`): `league_baseline` (average goals per match in a league = the baseline), `team_attack_defence` (attack/defence strength relative to the baseline), `match_lambdas` (assembles λ_home/λ_away + `HOME_ADVANTAGE`). The predictor is **within-league** (strength is relative to its league) |
+| `strength.py` | **λ from data** (`standings`) and the only file here that touches the database. `LeagueStrength` reads one league and season in a **single query**, computes the baseline (goals an average team scores in one match) and every team's attack/defence in its constructor, then answers `lambdas(home_id, away_id)` from a dictionary. A team with no row — a promoted side — gets a neutral 1.0/1.0, a documented simplification. Raises `ValueError` when the league/season has no matches played. The predictor is **within-league**: strength is relative to one league's own average |
 
 ---
 
@@ -131,8 +144,9 @@ A single-page application. Run with `npm run dev` (inside WSL, Node through `nvm
 |---|---|
 | `__init__.py` | Makes `tests/` a package (pytest then adds the project root to `sys.path`) |
 | `conftest.py` | **Test infrastructure**: an isolated **in-memory SQLite** database (`StaticPool`), `get_db` swapped through `app.dependency_overrides`, an autouse fixture wiping the database per test, the `client`/`db_session` fixtures |
-| `test_main.py` | **14 tests** of the endpoints (Arrange–Act–Assert, each seeding its own data): `/`, `/leagues`, `/standings`, `/fixtures`, `/bracket` (all rounds + proof of sorting, and the `knockout_only` filter), `/seasons` (the `UNION` of standings+fixtures + dedup + order), `/teams/{id}/past-matches` (an airtight scenario for `or_`/status/order), `/teams/{id}/future-matches` (`NS`+`asc`), `/teams?search=` (`ilike` substring + case-insensitivity + `order_by` + an empty result), wrong ids → 404 (standings + team), `/predict` (P(1/X/2) summing to ≈1 + top 5) and a 404 for a team outside the league |
-| `test_poisson.py` | **5 tests** of the pure Poisson maths (no DB, known values): `poisson_pmf`, `goal_distribution` (sums to ≈1), `score_matrix` (shape + the 1:0 cell), `match_outcome_probabilities` (61/21/18), `top_scorelines` (ordering). Together with `test_main.py`: **pytest 19/19** |
+| `test_main.py` | **23 tests** of the endpoints (Arrange–Act–Assert, each seeding its own data): `/`, `/leagues`, `/standings`, `/fixtures`, `/bracket` (all rounds + proof of sorting, and the `knockout_only` filter), `/seasons` (the `UNION` of standings+fixtures + dedup + order), `/teams/{id}/past-matches` (an airtight scenario for `or_`/status/order), `/teams/{id}/future-matches` (`NS`+`asc`), `/teams?search=` (`ilike` substring + case-insensitivity + `order_by` + an empty result), wrong ids → 404 (standings + team), `/predict` (P(1/X/2) summing to ≈1 + top 5) and a 404 for a team outside the league |
+| `test_poisson.py` | **5 tests** of the pure Poisson maths (no DB, known values): `poisson_pmf`, `goal_distribution` (sums to ≈1), `score_matrix` (shape + the 1:0 cell), `match_outcome_probabilities` (61/21/18), `top_scorelines` (ordering) |
+| `test_simulation.py` | **9 tests** of the simulator, with **no database at all**: `simulate_season` takes a model object, so two stand-ins (`AlwaysHomeWinsModel`, `RandomGoalsModel`) replace `PoissonModel` entirely — which also covers the default `sample_many()` inherited from `base.py`. Checks that every row and every column of the probability matrix sums to 1, that a seed makes a run reproducible, that the starting table is never modified (the test that replaces a dataclass's `frozen=True`), that an unbeaten team always takes the title, that an empty fixture list returns the current table, that a fixture naming an unknown team raises, and both of `final_table`'s tie-breaks. Together with the rest: **pytest 37/37** |
 
 **Running them:** `venv/bin/pytest -v` (inside WSL). The tests never touch the real database or API-Football.
 
@@ -184,9 +198,9 @@ Not a file in the repo, but part of the project:
 ## What is still to come (per the ROADMAP)
 
 - **Deployment (Session 19)** — **DONE**: backend on Render (Frankfurt) + PostgreSQL on Neon (Frankfurt) + frontend on Vercel, with UptimeRobot keeping the free instance awake and a README written for external readers.
-- **Next small items**: screenshots for the README (`docs/screenshots/`), and a `*` route in React Router so an unknown path shows a 404 page instead of an empty screen.
+- **Next small items**: screenshots for the README (`docs/screenshots/`) and CI through GitHub Actions. The `*` route and the 404 page are **done** (Session 20).
 - **Model #2 (Dixon-Coles)** — **blending several seasons** (time weights: the last plus the current one) + a low-score correction; a home/away split from `fixtures`. Then **model #3 (ML)** + a comparison of the models (Phase 5).
-- **Phase 4 (Monte Carlo simulator)** — simulating a match/league (after deployment).
+- **Phase 4 (Monte Carlo simulator)** — the backend is **done** (Session 20). What is left is the UI: an API module, a page with a league and model picker, and a colour-coded probability table; optionally a heatmap of the full position matrix.
 - **UI debt**: `TeamSelect` (the duplicated selects in `PredictPage`), cleaning up the element selectors in `index.css` (Vite template leftovers), a loading state for the team lists in `PredictPage`.
 - **A league-phase table** (CL/EL/Conference) — computed from matches or imported from standings (postponed).
 - Bracket cosmetics: connecting lines between ties; extending `KNOCKOUT_ROUNDS` with domestic cup rounds (so the FA Cup shows more than QF→Final).

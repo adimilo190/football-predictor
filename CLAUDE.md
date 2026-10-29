@@ -70,6 +70,12 @@ Project documents: [`instructions/project-assumptions.md`](instructions/project-
 - **Database schema changes go through Alembic migrations** — never `create_all`, never
   a manual `DROP`/`CREATE`. Generate, read the generated file, then `alembic upgrade head`.
 - Prefer explicit loops over dense comprehensions where it helps readability.
+- **Plain classes with `__init__`, consistently across `app/prediction/`** — no
+  `@dataclass`, no `NamedTuple`, no `TypedDict`. A larger project is easier to follow
+  when every file reaches for the same tool, and the boilerplate a dataclass saves is a
+  few lines per class. Where a dataclass would have given a guarantee for free
+  (`frozen=True` against accidental mutation), a test carries it instead - see
+  `test_starting_table_is_not_modified` in `tests/test_simulation.py`.
 
 ## Deployment
 

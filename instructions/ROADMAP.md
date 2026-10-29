@@ -272,14 +272,27 @@
 
 ## BLOCK 5 — Phase 4: the simulator (week 11: 8–14 Sep)
 
-### Session 20 — [ ] Monte Carlo
-- [ ] Simulating a match = drawing a result from the Poisson distributions
-- [ ] Simulating a league: the remaining matches × 1000 iterations from the current table → each team's chance of the title / top 4 / relegation
+### Session 20 — [x] Monte Carlo, backend — DONE 29 Oct (log `sessions/session-20.md`)
+> The session grew past its TODO. Before the simulator came a model **contract** and a
+> **registry**, because the project is meant to host several interchangeable prediction
+> models (Poisson → Dixon-Coles → cross-league → ML). The simulator, the endpoints and
+> the tests are all built on that contract. The simulator UI moves to Session 21, so
+> Phase 4 is not closed yet.
+- [x] Simulating a match = drawing a result from the Poisson distributions (`PoissonModel.sample`)
+- [x] Simulating a league: the remaining matches × 1000 iterations from the current table
+- [x] **A probability for every final position**, not just title / top 4 / relegation — those three are slices of the same list, so a question like "odds of finishing 5th to 7th" needs no API change
+- [x] **Model contract and registry** (`prediction/base.py`, `registry.py`, `poisson_model.py`): `GET /models` lists what exists, `?model=` picks one, and a second model costs one line in the registry
+- [x] `LeagueStrength`: a league's table read in **one** query instead of four per match, with a neutral 1.0/1.0 for promoted teams that have no row in the previous season. A full Premier League simulation went from 0.90 s to **0.18 s**
+- [x] `GET /leagues/{id}/simulate` — `season`, `model`, `iterations` (bounded 1–10000), `strength_season` (defaults to `season - 1`, because two rounds of data make every strength meaningless) and `seed` for reproducibility
+- [x] **37 tests**, up from 19: nine for the simulator with no database at all, nine for the endpoint, each one verified by mutating the code to confirm it fails for the bug it describes
 
-**Concepts covered:** the Monte Carlo method, thinking about performance (numpy vectorisation).
+**Concepts covered:** the Monte Carlo method, numpy vectorisation and where it stops paying off, ABC vs Protocol, the registry pattern, composition vs inheritance, mutation testing.
 
 ### Session 21 — [ ] The simulator UI ✦ MILESTONE
-- [ ] A "Simulate the season" button + a colour-coded probability table
+- [ ] `src/api/simulation.ts` — the response types plus `getModels()` and `getSimulation()`
+- [ ] A "Simulate the season" page + a colour-coded probability table
+- [ ] A model picker fed by `GET /models`, on the simulation page and on `PredictPage`
+- [ ] (optional) a heatmap of the full position matrix — the project's strongest visual
 - [ ] (optional) simulating a cup bracket
 
 ---

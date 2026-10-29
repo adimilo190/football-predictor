@@ -500,3 +500,222 @@ def test_predict_unknown_team_returns_404(client, db_session):
         params={"home_id": 10, "away_id": 99999, "league_id": 1, "season": 2024},
     )
     assert response.status_code == 404
+
+
+# --- GET /leagues/{id}/simulate -------------------------------------------
+# Three helpers, because every simulation test needs the same league, and the
+# interesting part of each test is what it leaves OUT: a missing strength
+# season, a missing fixture list, an impossible iteration count.
+
+
+def add_simulation_league(db_session):
+    """League 1 with three teams, shared by the simulation tests below."""
+    db_session.add(models.League(id=1, name="Test League", country="Testland"))
+    db_session.add(models.Team(id=10, name="Strong FC", country="Testland"))
+    db_session.add(models.Team(id=20, name="Mid FC", country="Testland"))
+    db_session.add(models.Team(id=30, name="Weak FC", country="Testland"))
+
+
+def add_standing(db_session, team_id, season, rank, points, goals_for, goals_against):
+    """One standings row; points are set explicitly because the simulator adds to them."""
+    db_session.add(
+        models.Standing(
+            league_id=1,
+            team_id=team_id,
+            season=season,
+            rank=rank,
+            played=20,
+            points=points,
+            goals_for=goals_for,
+            goals_against=goals_against,
+        )
+    )
+
+
+def add_fixture(db_session, fixture_id, home_id, away_id, season, day):
+    """A scheduled match - status NS is what the simulator picks up."""
+    db_session.add(
+        models.Fixture(
+            id=fixture_id,
+            league_id=1,
+            season=season,
+            round="Regular Season - 1",
+            date=datetime(season, 8, day, 15, 0),
+            home_team_id=home_id,
+            away_team_id=away_id,
+            status="NS",
+        )
+    )
+
+
+def add_full_round(db_session, season):
+    """Each pair home and away once, so home advantage favours nobody."""
+    pairs = [(10, 20), (20, 10), (20, 30), (30, 20), (10, 30), (30, 10)]
+    for index, (home_id, away_id) in enumerate(pairs):
+        add_fixture(db_session, 100 + index, home_id, away_id, season, index + 1)
+
+
+def test_simulate_returns_a_probability_for_every_place(client, db_session):
+    """Each team gets one probability per position, and they sum to 1."""
+    add_simulation_league(db_session)
+    add_standing(db_session, 10, 2024, 1, 40, 50, 20)
+    add_standing(db_session, 20, 2024, 2, 30, 35, 35)
+    add_standing(db_session, 30, 2024, 3, 20, 20, 50)
+    add_full_round(db_session, 2024)
+    db_session.commit()
+
+    response = client.get(
+        "/leagues/1/simulate",
+        params={"season": 2024, "strength_season": 2024, "iterations": 200, "seed": 42},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["model"] == "poisson"
+    assert data["iterations"] == 200
+    assert data["matches_simulated"] == 6
+    assert len(data["teams"]) == 3
+    for team in data["teams"]:
+        assert len(team["position_probabilities"]) == 3
+        assert sum(team["position_probabilities"]) == pytest.approx(1.0, abs=1e-9)
+        # The nested team object is what lets the frontend draw a table row.
+        assert team["team"]["name"] in {"Strong FC", "Mid FC", "Weak FC"}
+
+
+def test_simulate_takes_strength_from_the_previous_season(client, db_session):
+    """Without strength_season, strengths come from season - 1, not the table's own season.
+
+    The 2024 table is deliberately flat, so if the endpoint measured strength
+    there, no team could pull ahead. The gap can only come from 2023.
+    """
+    add_simulation_league(db_session)
+    for team_id in (10, 20, 30):
+        add_standing(db_session, team_id, 2024, 1, 10, 10, 10)
+    add_standing(db_session, 10, 2023, 1, 60, 60, 10)
+    add_standing(db_session, 20, 2023, 2, 30, 30, 30)
+    add_standing(db_session, 30, 2023, 3, 10, 10, 60)
+    add_full_round(db_session, 2024)
+    db_session.commit()
+
+    response = client.get(
+        "/leagues/1/simulate",
+        params={"season": 2024, "iterations": 300, "seed": 42},
+    )
+
+    assert response.status_code == 200
+    by_name = {team["team"]["name"]: team for team in response.json()["teams"]}
+    assert by_name["Strong FC"]["average_points"] > by_name["Weak FC"]["average_points"]
+    assert by_name["Strong FC"]["position_probabilities"][0] > 0.5
+
+
+def test_simulate_without_a_strength_season_in_the_database_returns_404(
+    client, db_session
+):
+    """Season 2023 holds nothing, so there is no average to measure teams against."""
+    add_simulation_league(db_session)
+    for team_id in (10, 20, 30):
+        add_standing(db_session, team_id, 2024, 1, 10, 10, 10)
+    add_full_round(db_session, 2024)
+    db_session.commit()
+
+    response = client.get("/leagues/1/simulate", params={"season": 2024})
+
+    assert response.status_code == 404
+    assert "2023" in response.json()["detail"]
+
+
+def test_simulate_with_no_fixtures_left_returns_the_current_table(client, db_session):
+    """A finished season has nothing to draw, so the table is already certain."""
+    add_simulation_league(db_session)
+    add_standing(db_session, 10, 2024, 1, 40, 50, 20)
+    add_standing(db_session, 20, 2024, 2, 30, 35, 35)
+    add_standing(db_session, 30, 2024, 3, 20, 20, 50)
+    db_session.commit()
+
+    response = client.get(
+        "/leagues/1/simulate",
+        params={"season": 2024, "strength_season": 2024, "iterations": 10},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["matches_simulated"] == 0
+    assert data["teams"][0]["team"]["name"] == "Strong FC"
+    assert data["teams"][0]["position_probabilities"] == [1.0, 0.0, 0.0]
+
+
+def test_simulate_same_seed_returns_the_same_table(client, db_session):
+    """The seed parameter is wired through, so a run can be reproduced exactly."""
+    add_simulation_league(db_session)
+    add_standing(db_session, 10, 2024, 1, 40, 50, 20)
+    add_standing(db_session, 20, 2024, 2, 30, 35, 35)
+    add_standing(db_session, 30, 2024, 3, 20, 20, 50)
+    add_full_round(db_session, 2024)
+    db_session.commit()
+
+    params = {"season": 2024, "strength_season": 2024, "iterations": 100, "seed": 7}
+    first = client.get("/leagues/1/simulate", params=params).json()
+    second = client.get("/leagues/1/simulate", params=params).json()
+
+    assert first == second
+
+
+def test_simulate_unknown_league_returns_404(client):
+    """No standings at all means nothing to simulate.
+
+    The message is asserted, not just the status: without the guard on an empty
+    table this request still ends in a 404, but from LeagueStrength further
+    down, which would hide the fact that the guard had gone.
+    """
+    response = client.get("/leagues/999/simulate", params={"season": 2024})
+
+    assert response.status_code == 404
+    assert "999" in response.json()["detail"]
+    assert "standings" in response.json()["detail"].lower()
+
+
+def test_simulate_with_standings_only_in_the_strength_season_returns_404(
+    client, db_session
+):
+    """Strengths are there, but the season being simulated has no table at all.
+
+    This is the case the empty-table guard exists for: strengths resolve fine
+    from 2023, so without it the endpoint answers 200 with an empty team list -
+    a success that tells the caller nothing.
+    """
+    add_simulation_league(db_session)
+    add_standing(db_session, 10, 2023, 1, 40, 50, 20)
+    add_standing(db_session, 20, 2023, 2, 30, 35, 35)
+    add_standing(db_session, 30, 2023, 3, 20, 20, 50)
+    db_session.commit()
+
+    response = client.get("/leagues/1/simulate", params={"season": 2024})
+
+    assert response.status_code == 404
+    assert "standings" in response.json()["detail"].lower()
+
+
+def test_simulate_unknown_model_returns_400(client, db_session):
+    """A model name outside the registry is a bad request, not a missing resource."""
+    add_simulation_league(db_session)
+    add_standing(db_session, 10, 2024, 1, 40, 50, 20)
+    add_standing(db_session, 20, 2024, 2, 30, 35, 35)
+    add_standing(db_session, 30, 2024, 3, 20, 20, 50)
+    db_session.commit()
+
+    response = client.get(
+        "/leagues/1/simulate",
+        params={"season": 2024, "strength_season": 2024, "model": "xgboost"},
+    )
+
+    assert response.status_code == 400
+    assert "xgboost" in response.json()["detail"]
+
+
+def test_simulate_rejects_an_impossible_iteration_count(client):
+    """The bounds on iterations are what let the simulator assume a sane number."""
+    for iterations in (0, 999999):
+        response = client.get(
+            "/leagues/1/simulate", params={"season": 2024, "iterations": iterations}
+        )
+        assert response.status_code == 422

@@ -635,3 +635,45 @@
 * **Result**: the September goal is met — a **publicly available app** with the predictor,
   a README a stranger can read, and a repo documented for external readers. Phases 4
   (Monte Carlo) and 5 (ML) continue in October on the live project.
+
+## Session 20 (2026-10-29) — Monte Carlo backend + the multi-model architecture
+
+* [x] **A contract for prediction models** (`app/prediction/base.py`): `PredictionModel`
+  as an `abc.ABC` with `probabilities()` and `sample()` abstract, plus default
+  `top_scorelines()` and `sample_many()`. Chosen over `typing.Protocol` because the
+  project has Ruff but no mypy — an ABC fails when the object is constructed, a Protocol
+  would only fail in a type checker nobody runs here.
+* [x] **A registry** (`app/prediction/registry.py`): an explicit `{"poisson":
+  PoissonModel}` dict, `build_model()`, `UnknownModelError` and `list_models()`. Model
+  metadata lives on the **class**, not the instance, so `GET /models` reads it without a
+  database session — the only endpoint in the project with no `Depends(get_db)`.
+* [x] **Monte Carlo season simulator** (`app/prediction/simulation.py`): draws the
+  remaining fixtures through any registered model and counts how often each team lands in
+  each position. Returns a full probability matrix (one value per place, summing to 1)
+  rather than three hand-picked milestones.
+* [x] **Strength rewritten as `LeagueStrength`**: the whole table loaded in one query, the
+  baseline and every team's attack/defence computed in the constructor, so a match costs
+  two dictionary lookups. Replaced `league_baseline`, `team_attack_defence` and (once the
+  router moved to the registry) `match_lambdas`. Four latent crashes fixed on the way: a
+  missing standings row, `played = 0`, a zero baseline, and the four-queries-per-match
+  pattern. A Premier League simulation: **0.90 s → 0.42 s → 0.18 s**.
+* [x] **Promoted teams get a neutral 1.0/1.0.** They have no row in the previous season of
+  this league, so there is nothing to measure them by. It flatters them, and it is the only
+  honest value available until strengths become comparable across leagues — recorded as a
+  deliberate simplification rather than an oversight.
+* [x] **Three endpoints**: `GET /models`, `GET /predict` rewritten to go through the
+  registry (new `?model=` parameter, no maths left in the router), and
+  `GET /leagues/{id}/simulate` returning the predicted final table with every team's
+  odds of every position.
+* [x] **404 page** (`frontend/src/pages/NotFoundPage.tsx` + the `*` route) — the debt left
+  by the Vercel SPA rewrite in Session 19.
+* [x] **Mutation testing**, the session's most useful habit: six deliberate bugs, five
+  caught by the test that claims to catch them. It exposed two false claims in the test
+  docstrings and one genuine blind spot — a transposed counting matrix passed every row
+  and column check, because both sums are invariant under transposition. Fixed by making
+  the test table's order differ from its team ids.
+* **Quality**: pytest **37/37** (was 19), Ruff clean on `app/` and `tests/`. No
+  API-Football requests — the Pro subscription expired on 1 October, so the project now
+  lives on the data already imported.
+* **Still open**: the whole simulator UI (Session 21), the `ORDER BY` on fixtures has no
+  test coverage (SQLite cannot show the difference), README screenshots and GitHub Actions.
