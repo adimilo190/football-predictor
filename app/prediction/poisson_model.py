@@ -11,10 +11,11 @@
 # "1.2 attack" means nothing once the two teams come from different baselines.
 
 import numpy as np
+from sqlalchemy.orm import Session
 
 from app.prediction import poisson
 from app.prediction.base import PredictionModel
-from app.prediction.strength import match_lambdas
+from app.prediction.strength import LeagueStrength
 
 
 class PoissonModel(PredictionModel):
@@ -34,9 +35,13 @@ class PoissonModel(PredictionModel):
     # ceiling - see sample().
     MAX_GOALS: int = 10
 
+    def __init__(self, db: Session, league_id: int, season: int):
+        super().__init__(db, league_id, season)
+        self.strength = LeagueStrength(db, league_id, season)
+
     def _lambdas(self, home_id: int, away_id: int) -> tuple[float, float]:
         """Expected goals for both sides - the only input this model needs."""
-        return match_lambdas(self.db, home_id, away_id, self.league_id, self.season)
+        return self.strength.lambdas(home_id, away_id)
 
     def _matrix(self, home_id: int, away_id: int) -> np.ndarray:
         """Probability of every scoreline up to MAX_GOALS, as a matrix."""
@@ -69,9 +74,10 @@ class PoissonModel(PredictionModel):
         rng: np.random.Generator,
         size: int,
     ) -> np.ndarray:
-        # The lambdas are computed once per match, before any drawing happens.
-        # That is the whole reason this method overrides the base version: there,
-        # every single simulation would recompute them from the database.
+        # Collect every pair's lambdas first, so the drawing below can be a
+        # single numpy call. That is what this override buys: the version in
+        # base.py draws goal by goal through sample(), and a Python loop over
+        # hundreds of thousands of draws measured 8x slower on a full league.
         home_lambdas = []
         away_lambdas = []
         for home_id, away_id in pairs:
