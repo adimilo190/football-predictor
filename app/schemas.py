@@ -98,12 +98,47 @@ class ScoreLine(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """Poisson prediction for a match: 1/X/2 plus the most likely scorelines.
+    """A model's prediction for a match: 1/X/2 plus the most likely scorelines.
 
-    These are computed values (not read from a table), so no from_attributes.
+    Which model produced it is the caller's choice, so nothing here is specific
+    to Poisson. These are computed values (not read from a table), so no
+    from_attributes.
     """
 
     home_win: float
     draw: float
     away_win: float
     top_scores: list[ScoreLine]
+
+
+class ModelInfo(BaseModel):
+    """One prediction model, as the model picker in the UI needs it."""
+
+    name: str
+    label: str
+    description: str
+    supports_cross_league: bool
+
+
+class TeamSimulationOutcome(BaseModel):
+    """One team's simulated season: where it is likely to finish."""
+
+    team: TeamResponse
+    average_points: float
+    # Index 0 is first place: position_probabilities[0] is the title, the last
+    # three summed are relegation. The frontend slices it instead of asking for
+    # separate fields.
+    position_probabilities: list[float]
+
+
+class SimulationResponse(BaseModel):
+    """Result of a Monte Carlo run over one league's remaining fixtures.
+
+    model and iterations are echoed back so a stored or shared response says how
+    it was produced - the numbers mean nothing without them.
+    """
+
+    model: str
+    iterations: int
+    matches_simulated: int
+    teams: list[TeamSimulationOutcome]

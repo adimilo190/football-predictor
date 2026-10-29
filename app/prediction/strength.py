@@ -101,15 +101,3 @@ class LeagueStrength:
         lam_home = self.base * home_attack * away_defence * HOME_ADVANTAGE
         lam_away = self.base * away_attack * home_defence
         return (lam_home, lam_away)
-
-
-def match_lambdas(
-    db: Session, home_id: int, away_id: int, league_id: int, season: int
-) -> tuple[float, float]:
-    """Expected goals for a single match, loading the league on the spot.
-
-    For callers that predict one match and have nowhere to keep the strengths -
-    the single-match endpoint. Building a LeagueStrength per call still costs one
-    query, where the previous per-team helpers needed four.
-    """
-    return LeagueStrength(db, league_id, season).lambdas(home_id, away_id)
